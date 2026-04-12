@@ -33,6 +33,9 @@ const RECETAS = [
     total:1100, ingredientes:[["Agua",600],["Base Pro",100],["Pasta de turrón",400]]},
 
   // ── Helados Clásicos ───────────────────────────────────────────────────────
+  { categoria:"Helados Clásicos", nombre:"Melado Stracciatella",
+    subtitle:"Base láctea para Stracciatella",
+    total:945, ingredientes:[["Leche entera",584],["Nata",166],["Azúcar",65],["Dextrosa",63],["Leche en polvo 1%",30],["Glucosa",23],["Maltodextrina",10],["Profibe R",4]]},
   { categoria:"Helados Clásicos", nombre:"Helado de Vainilla",
     subtitle:"Con Yema de Huevo",
     total:1310, ingredientes:[["Leche",700],["Azúcar",140],["Dextrosa",50],["Glicerina",20],["Base Pro Crema",80],["Nata 35%",150],["Yema de huevo",150],["Extracto de vainilla",20],["Sal",1]]},
