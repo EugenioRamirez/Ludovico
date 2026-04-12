@@ -116,7 +116,7 @@ function initLogin() {
 function doLogin(nombre) {
   Estado.setEmpleada(nombre);
   renderTopbarAvatar(nombre);
-  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-login').classList.add('hidden');
   document.getElementById('app-layout').classList.remove('hidden');
   App.init();
 }
@@ -136,7 +136,7 @@ function renderTopbarAvatar(nombre) {
 function doLogout() {
   Estado.cerrarSesion();
   document.getElementById('app-layout').classList.add('hidden');
-  document.getElementById('screen-login').classList.add('active');
+  document.getElementById('screen-login').classList.remove('hidden');
   window.location.hash = '';
 }
 
