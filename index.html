@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1565A0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Helados Ludovico · Inventario</title>
+  <link rel="icon" type="image/png" href="assets/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════
+       PANTALLA LOGIN
+  ══════════════════════════════════════════════ -->
+  <div id="screen-login" class="screen screen-login active">
+    <div class="login-hero">
+      <img src="assets/logo.png" alt="Helados Ludovico" class="login-logo" />
+      <h1 class="login-title">Helados Ludovico</h1>
+      <p class="login-sub">¿Quién eres?</p>
+    </div>
+    <div class="login-grid" id="login-grid">
+      <!-- renderizado por app.js -->
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       APP LAYOUT (post-login)
+  ══════════════════════════════════════════════ -->
+  <div id="app-layout" class="app-layout hidden">
+
+    <!-- TopBar -->
+    <header class="topbar" id="topbar">
+      <div class="topbar-left">
+        <img src="assets/logo.png" alt="Logo" class="topbar-logo" />
+        <span class="topbar-title" id="topbar-title">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-avatar" id="topbar-avatar" title="Cerrar sesión"></div>
+      </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="main-content" id="main-content">
+
+      <!-- ── Dashboard ────────────────────────────── -->
+      <section id="screen-dashboard" class="screen active">
+        <div class="kpi-grid" id="kpi-grid">
+          <div class="kpi" id="kpi-ok">
+            <div class="kpi-val">–</div>
+            <div class="kpi-lbl">En stock</div>
+          </div>
+          <div class="kpi kpi-warn" id="kpi-low">
+            <div class="kpi-val">–</div>
+            <div class="kpi-lbl">Stock bajo</div>
+          </div>
+          <div class="kpi kpi-crit" id="kpi-crit">
+            <div class="kpi-val">–</div>
+            <div class="kpi-lbl">Crítico</div>
+          </div>
+        </div>
+
+        <div class="card" id="card-alerts">
+          <h3 class="card-title">⚠️ Productos con stock bajo</h3>
+          <div id="alerts-list"><div class="empty-msg">Cargando…</div></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">📋 Lista de compra pendiente</h3>
+          <div id="dash-compras-count" class="last-conteo">Cargando…</div>
+          <button class="btn btn-outline btn-sm" onclick="App.nav('compras')" style="margin-top:10px">
+            Ver lista →
+          </button>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">🗓️ Último conteo semanal</h3>
+          <div id="last-conteo" class="last-conteo">Cargando…</div>
+          <button class="btn btn-outline btn-sm" onclick="App.nav('conteo')" style="margin-top:10px">
+            Ir a conteo →
+          </button>
+        </div>
+      </section>
+
+      <!-- ── Inventario ─────────────────────────── -->
+      <section id="screen-inventario" class="screen">
+        <div class="search-bar">
+          <input type="search" id="inv-search" placeholder="🔍  Buscar producto…" autocomplete="off" />
+        </div>
+        <div class="filter-tabs" id="inv-cat-tabs">
+          <button class="filter-tab active" data-cat="all">Todos</button>
+          <!-- más tabs por categoría generados por inventario.js -->
+        </div>
+        <div id="inv-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+        <!-- FAB añadir producto (solo Administrador) -->
+        <button class="fab" id="fab-add-producto" title="Añadir producto">＋</button>
+      </section>
+
+      <!-- ── Conteo Semanal ─────────────────────── -->
+      <section id="screen-conteo" class="screen">
+        <div class="conteo-header">
+          <div>
+            <div class="conteo-header-title">Conteo Semanal</div>
+            <div class="conteo-header-sub" id="conteo-fecha">Hoy: <span id="conteo-fecha-val">–</span></div>
+          </div>
+          <button class="btn btn-primary" id="btn-guardar-conteo">Guardar todo</button>
+        </div>
+        <div id="conteo-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+      </section>
+
+      <!-- ── Lista de Compras ────────────────────── -->
+      <section id="screen-compras" class="screen">
+        <div class="filter-tabs" id="compras-filter-tabs">
+          <button class="filter-tab active" data-estado="all">Todos</button>
+          <button class="filter-tab" data-estado="pendiente">Pendiente</button>
+          <button class="filter-tab" data-estado="pedido">Pedido</button>
+          <button class="filter-tab" data-estado="recibido">Recibido</button>
+        </div>
+        <div id="compras-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+        <div class="compras-actions">
+          <button class="btn btn-outline" id="btn-export-pdf">📄 Exportar PDF</button>
+        </div>
+        <!-- FAB añadir ítem -->
+        <button class="fab" id="fab-add-compra" title="Añadir a la lista">＋</button>
+      </section>
+
+    </main><!-- /main-content -->
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <div class="nav-accent"></div>
+      <div class="nav-items">
+        <button class="nav-item active" data-screen="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-screen="inventario">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+          </svg>
+          <span>Inventario</span>
+        </button>
+        <button class="nav-item" data-screen="conteo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <span>Conteo</span>
+        </button>
+        <button class="nav-item" data-screen="compras">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span>Compras</span>
+        </button>
+      </div>
+    </nav>
+
+  </div><!-- /app-layout -->
+
+
+  <!-- ══════════════════════════════════════════════
+       MODALES
+  ══════════════════════════════════════════════ -->
+
+  <!-- Modal: Añadir / Editar Producto -->
+  <div class="modal-overlay hidden" id="modal-producto-overlay">
+    <div class="modal" id="modal-producto">
+      <div class="modal-header">
+        <h3 id="modal-producto-title">Añadir Producto</h3>
+        <button class="modal-close" id="modal-producto-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="prod-id" />
+        <div class="form-row">
+          <label>Nombre del producto *</label>
+          <input type="text" id="prod-nombre" placeholder="Ej: Leche entera" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Categoría</label>
+          <select id="prod-categoria">
+            <option value="">– Sin categoría –</option>
+          </select>
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Unidad *</label>
+            <select id="prod-unidad">
+              <option value="kg">kg</option>
+              <option value="L">L</option>
+              <option value="ud">ud</option>
+              <option value="bolsa">bolsa</option>
+              <option value="caja">caja</option>
+              <option value="bote">bote</option>
+              <option value="sobre">sobre</option>
+            </select>
+          </div>
+          <div>
+            <label>Stock mínimo</label>
+            <input type="number" id="prod-stock-min" min="0" step="0.1" placeholder="0" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Notas</label>
+          <input type="text" id="prod-notas" placeholder="Opcional" autocomplete="off" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-producto">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-producto">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ajuste de Stock (desde Inventario) -->
+  <div class="modal-overlay hidden" id="modal-stock-overlay">
+    <div class="modal" id="modal-stock">
+      <div class="modal-header">
+        <h3 id="modal-stock-title">Ajustar Stock</h3>
+        <button class="modal-close" id="modal-stock-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="stock-prod-id" />
+        <p id="stock-prod-info" style="font-size:14px;color:var(--text-muted);margin-bottom:16px;"></p>
+        <div class="form-row">
+          <label>Tipo de movimiento</label>
+          <div class="toggle-group" id="stock-tipo-group">
+            <button class="toggle-btn active" data-val="entrada">📥 Entrada</button>
+            <button class="toggle-btn" data-val="salida">📤 Salida</button>
+            <button class="toggle-btn" data-val="ajuste">✏️ Ajuste</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label id="stock-cantidad-lbl">Cantidad</label>
+          <input type="number" id="stock-cantidad" min="0" step="0.1" placeholder="0" />
+        </div>
+        <div class="form-row" id="stock-ajuste-row" style="display:none">
+          <label>Nuevo stock total</label>
+          <input type="number" id="stock-nuevo-total" min="0" step="0.1" placeholder="0" />
+        </div>
+        <div class="form-row">
+          <label>Notas</label>
+          <input type="text" id="stock-notas" placeholder="Opcional" autocomplete="off" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-stock">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-stock">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Añadir ítem a compras -->
+  <div class="modal-overlay hidden" id="modal-compra-overlay">
+    <div class="modal" id="modal-compra">
+      <div class="modal-header">
+        <h3>Añadir a la Lista</h3>
+        <button class="modal-close" id="modal-compra-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <label>Producto del inventario</label>
+          <select id="compra-producto-sel">
+            <option value="">– Escribir manualmente –</option>
+          </select>
+        </div>
+        <div class="form-row" id="compra-nombre-row">
+          <label>Nombre libre</label>
+          <input type="text" id="compra-nombre-libre" placeholder="Ej: Vasos de cartón 500ml" autocomplete="off" />
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Cantidad</label>
+            <input type="number" id="compra-cantidad" min="0" step="0.1" placeholder="0" />
+          </div>
+          <div>
+            <label>Unidad</label>
+            <input type="text" id="compra-unidad" placeholder="kg, L, ud…" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Notas</label>
+          <input type="text" id="compra-notas" placeholder="Opcional" autocomplete="off" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-compra">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-compra">Añadir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast hidden" id="toast"></div>
+
+  <!-- ══════════════════════════════════════════════
+       SCRIPTS
+  ══════════════════════════════════════════════ -->
+  <!-- Supabase JS v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- App modules -->
+  <script src="js/config.js"></script>
+  <script src="js/pdf.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/inventario.js"></script>
+  <script src="js/conteo.js"></script>
+  <script src="js/compras.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
