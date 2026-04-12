@@ -252,16 +252,20 @@ select {
 
 /* Modal */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,30,60,0.5);
-  display: flex; align-items: flex-end; justify-content: center;
-  z-index: 200;
+  position: fixed; inset: 0; background: rgba(0,30,60,0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: 16px;
 }
 .modal {
-  background: white; border-radius: 20px 20px 0 0;
-  width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto;
-  padding: 20px; animation: slideUp .28s ease;
+  background: white; border-radius: 18px;
+  width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto;
+  padding: 22px; animation: fadeScale .22s ease;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
 }
-@keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes fadeScale {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
 
 .modal-header {
   display: flex; align-items: center; justify-content: space-between;
