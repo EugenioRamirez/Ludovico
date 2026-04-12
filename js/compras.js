@@ -16,12 +16,35 @@ const Compras = {
 
   async loadProductos() {
     try {
-      const { data } = await sb.from('productos').select('id, nombre, unidad').eq('activo', true).order('nombre');
+      const { data } = await sb
+        .from('productos')
+        .select('id, nombre, unidad, categorias(nombre)')
+        .eq('activo', true)
+        .order('nombre');
       this.productos = data || [];
+
+      // Agrupar por categoría
+      const grupos = {};
+      this.productos.forEach(p => {
+        const cat = p.categorias ? p.categorias.nombre : 'Sin categoría';
+        if (!grupos[cat]) grupos[cat] = [];
+        grupos[cat].push(p);
+      });
+
       const sel = document.getElementById('compra-producto-sel');
       sel.innerHTML = '<option value="">– Escribir manualmente –</option>';
-      this.productos.forEach(p => {
-        sel.innerHTML += `<option value="${p.id}" data-unidad="${p.unidad}">${p.nombre}</option>`;
+
+      Object.entries(grupos).sort((a,b) => a[0].localeCompare(b[0])).forEach(([cat, prods]) => {
+        const group = document.createElement('optgroup');
+        group.label = cat;
+        prods.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.dataset.unidad = p.unidad;
+          opt.textContent = p.nombre;
+          group.appendChild(opt);
+        });
+        sel.appendChild(group);
       });
     } catch (e) {
       console.error('Compras.loadProductos:', e);
