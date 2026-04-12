@@ -116,31 +116,38 @@ body {
 /* ── Contenido principal ── */
 .main-content {
   flex: 1;
-  padding: 16px 16px 80px;
+  padding: 16px 16px 32px;
   max-width: 700px; width: 100%; margin: 0 auto;
   overflow-y: auto;
 }
 
-/* ── Bottom Nav ── */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
+/* ── Top Nav (under topbar) ── */
+.top-nav {
   background: var(--blue-dark);
-  z-index: 100;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.2);
+  border-bottom: 3px solid var(--orange);
+  position: sticky; top: var(--nav-h); z-index: 99;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
 }
-.nav-accent  { height: 4px; background: var(--orange); }
-.nav-items   { display: flex; height: 56px; }
+.nav-items { display: flex; }
 
 .nav-item {
   flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 2px;
+  align-items: center; justify-content: center; gap: 3px;
   cursor: pointer; border: none; background: transparent;
   color: rgba(255,255,255,0.4);
   font-family: 'Poppins', sans-serif; font-size: 9px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.3px;
-  transition: color .2s; padding: 6px 0;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  transition: color .2s, background .2s;
+  padding: 10px 0; position: relative;
 }
-.nav-item.active { color: var(--cyan); }
+.nav-item.active {
+  color: var(--cyan);
+  background: rgba(0,180,204,0.08);
+}
+.nav-item.active::after {
+  content: ''; position: absolute; bottom: -3px; left: 0; right: 0;
+  height: 3px; background: var(--cyan);
+}
 .nav-item svg { width: 20px; height: 20px; }
 
 /* ── Pantallas ─────────────────────────────────────────────── */
@@ -192,7 +199,7 @@ body {
 
 /* FAB */
 .fab {
-  position: fixed; bottom: 76px; right: 16px;
+  position: fixed; bottom: 24px; right: 16px;
   width: 52px; height: 52px; border-radius: 50%;
   background: var(--orange); color: white; border: none;
   font-size: 28px; font-weight: 300; line-height: 1;
@@ -274,7 +281,7 @@ select {
 
 /* Toast */
 .toast {
-  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
   background: var(--blue-dark); color: white;
   padding: 11px 22px; border-radius: 22px;
   font-size: 13px; font-weight: 600;
