@@ -100,6 +100,7 @@ const Compras = {
       const unidad = item.unidad || (item.productos ? item.productos.unidad : '') || '';
       const qty    = item.cantidad != null ? `${fmtNum(item.cantidad)} ${unidad}` : unidad;
 
+      const esPedido = item.estado === 'pedido';
       return `
         <div class="compra-item" data-id="${item.id}">
           <div class="compra-check-wrap">
@@ -109,9 +110,16 @@ const Compras = {
           </div>
           <div class="compra-info">
             <span class="compra-nombre ${item.estado === 'recibido' ? 'tachado' : ''}">${nombre}</span>
-            ${qty ? `<span class="compra-qty">${qty}</span>` : ''}
+            ${esPedido ? `
+              <div class="compra-qty-wrap">
+                <input class="compra-qty-input" type="number" min="0" step="0.1"
+                  value="${item.cantidad != null ? item.cantidad : ''}"
+                  placeholder="Cant." data-id="${item.id}" data-unidad="${unidad}" />
+                <button class="btn-qty-save" data-id="${item.id}">✓ Guardar</button>
+              </div>
+            ` : qty ? `<span class="compra-qty">${qty}</span>` : ''}
             ${item.notas ? `<span class="compra-notas">${item.notas}</span>` : ''}
-            <span class="compra-meta">Añadido por ${item.empleada} · <span class="badge badge-${cls}">${lbl}</span></span>
+            <span class="compra-meta">Por ${item.empleada} · <span class="badge badge-${cls}">${lbl}</span></span>
           </div>
           <button class="btn btn-sm btn-ghost btn-del-compra" data-id="${item.id}" title="Eliminar">🗑</button>
         </div>
@@ -124,6 +132,15 @@ const Compras = {
     });
     el.querySelectorAll('.btn-del-compra').forEach(btn => {
       btn.addEventListener('click', () => this.eliminar(btn.dataset.id));
+    });
+    // Guardar cantidad editada (solo en estado pedido)
+    el.querySelectorAll('.btn-qty-save').forEach(btn => {
+      btn.addEventListener('click', () => this.guardarCantidad(btn.dataset.id));
+    });
+    el.querySelectorAll('.compra-qty-input').forEach(inp => {
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') this.guardarCantidad(inp.dataset.id);
+      });
     });
   },
 
@@ -160,6 +177,23 @@ const Compras = {
     } catch (e) {
       console.error('avanzarEstado:', e);
       showToast('Error al cambiar estado', 'error');
+    }
+  },
+
+  async guardarCantidad(id) {
+    const inp = document.querySelector(`.compra-qty-input[data-id="${id}"]`);
+    if (!inp) return;
+    const nueva = parseFloat(inp.value);
+    if (isNaN(nueva) || nueva < 0) { showToast('Cantidad no válida', 'error'); return; }
+    const unidad = inp.dataset.unidad || '';
+    try {
+      const { error } = await sb.from('lista_compra').update({ cantidad: nueva }).eq('id', id);
+      if (error) throw error;
+      const item = this.items.find(i => i.id == id);
+      if (item) item.cantidad = nueva;
+      showToast(`Cantidad actualizada: ${nueva} ${unidad}`, 'success');
+    } catch (e) {
+      showToast('Error al guardar', 'error');
     }
   },
 
