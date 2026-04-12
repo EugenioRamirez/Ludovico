@@ -73,6 +73,23 @@ const Conteo = {
 
   bindUI() {
     document.getElementById('btn-guardar-conteo').onclick = () => this.guardar();
+
+    // FAB: abrir modal de producto (reutiliza el de Inventario)
+    const fab = document.getElementById('fab-add-desde-conteo');
+    if (fab) {
+      fab.onclick = () => {
+        // Asegurarnos de que las categorías estén cargadas
+        if (!Inventario.categorias.length) Inventario.loadCategorias();
+        Inventario.openProductoModal(null);
+        // Al guardar, recargar conteo
+        const btnSave = document.getElementById('btn-save-producto');
+        const originalSave = btnSave.onclick;
+        btnSave.onclick = async () => {
+          await Inventario.saveProducto();
+          await Conteo.load();
+        };
+      };
+    }
   },
 
   async guardar() {

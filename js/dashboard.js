@@ -3,16 +3,30 @@
 const Dashboard = {
 
   async load() {
+    this.renderGreeting();
     this.renderKPIs('–', '–', '–');
-    document.getElementById('alerts-list').innerHTML        = '<div class="empty-msg">Cargando…</div>';
-    document.getElementById('dash-compras-count').textContent = 'Cargando…';
-    document.getElementById('last-conteo').textContent     = 'Cargando…';
+    document.getElementById('alerts-list').innerHTML   = '<div class="empty-msg">Cargando…</div>';
+    document.getElementById('dash-last-conteo-txt').textContent = '…';
+    document.getElementById('dash-action-compras').textContent  = 'Lista de compras';
 
     await Promise.all([
       this.loadStock(),
       this.loadComprasPendientes(),
       this.loadLastConteo(),
     ]);
+  },
+
+  renderGreeting() {
+    const empleada = Estado.getEmpleada() || '';
+    const nombre   = empleada.split(' ')[0];
+    const ahora    = new Date();
+    const hora     = ahora.getHours();
+    const saludo   = hora < 13 ? 'Buenos días' : hora < 20 ? 'Buenas tardes' : 'Buenas noches';
+
+    document.getElementById('dash-greeting-name').textContent =
+      `${saludo}, ${nombre} 👋`;
+    document.getElementById('dash-greeting-date').textContent =
+      ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
   },
 
   renderKPIs(ok, low, crit) {
@@ -25,94 +39,144 @@ const Dashboard = {
     try {
       const { data, error } = await sb
         .from('productos')
-        .select('id, nombre, stock_actual, stock_minimo, unidad')
+        .select('id, nombre, stock_actual, stock_minimo, unidad, proveedor, categorias(nombre)')
         .eq('activo', true)
         .order('nombre');
 
       if (error) throw error;
 
       let ok = 0, low = 0, crit = 0;
-      const alertItems = [];
+      const alertas = [];
 
       data.forEach(p => {
-        const ratio = p.stock_minimo > 0 ? p.stock_actual / p.stock_minimo : 1;
         if (p.stock_actual <= 0) {
           crit++;
-          alertItems.push({ ...p, nivel: 'crit' });
-        } else if (ratio < 1) {
+          alertas.push({ ...p, nivel: 'crit' });
+        } else if (p.stock_minimo > 0 && p.stock_actual < p.stock_minimo) {
           low++;
-          alertItems.push({ ...p, nivel: 'low' });
+          alertas.push({ ...p, nivel: 'low' });
         } else {
           ok++;
         }
       });
 
       this.renderKPIs(ok, low, crit);
-      this.renderAlerts(alertItems);
+      this.renderAlertas(alertas);
 
     } catch (e) {
       console.error('Dashboard.loadStock:', e);
-      document.getElementById('alerts-list').innerHTML = '<div class="empty-msg error-msg">Error al cargar stock</div>';
+      document.getElementById('alerts-list').innerHTML =
+        '<div class="empty-msg error-msg">Error al cargar stock</div>';
     }
   },
 
-  renderAlerts(items) {
+  renderAlertas(items) {
     const el = document.getElementById('alerts-list');
+
     if (!items.length) {
-      el.innerHTML = '<div class="empty-msg">✅ Todo el inventario está OK</div>';
+      el.innerHTML = `
+        <div class="dash-all-ok">
+          <span class="dash-all-ok-icon">🎉</span>
+          <span>Todo el inventario está en orden</span>
+        </div>`;
       return;
     }
-    // Sort: crit first, then low
+
+    // Críticos primero
     items.sort((a, b) => (a.nivel === 'crit' ? -1 : 1));
-    el.innerHTML = items.slice(0, 8).map(p => `
-      <div class="alert-item">
-        <span class="badge badge-${p.nivel === 'crit' ? 'crit' : 'low'}">
-          ${p.nivel === 'crit' ? '❌ Agotado' : '⚠️ Bajo'}
-        </span>
-        <span class="alert-name">${p.nombre}</span>
-        <span class="alert-stock">${fmtNum(p.stock_actual)} ${p.unidad}</span>
-      </div>
-    `).join('') + (items.length > 8
-      ? `<div class="empty-msg" style="margin-top:8px">…y ${items.length - 8} más</div>`
-      : '');
+
+    el.innerHTML = items.map(p => {
+      const cat  = p.categorias ? p.categorias.nombre : '';
+      const prov = p.proveedor  ? ` · ${p.proveedor}` : '';
+      return `
+        <div class="alert-item">
+          <div class="alert-item-left">
+            <span class="badge badge-${p.nivel === 'crit' ? 'crit' : 'low'}">
+              ${p.nivel === 'crit' ? '❌ Agotado' : '⚠️ Bajo'}
+            </span>
+            <div class="alert-item-info">
+              <span class="alert-name">${p.nombre}</span>
+              <span class="alert-sub">${cat}${prov}</span>
+            </div>
+          </div>
+          <div class="alert-item-right">
+            <span class="alert-stock">${fmtNum(p.stock_actual)} ${p.unidad}</span>
+            <button class="btn-alert-compra" data-id="${p.id}" data-nombre="${p.nombre}" data-unidad="${p.unidad}" title="Añadir a compras">
+              🛒
+            </button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Botón añadir a compras directamente desde dashboard
+    el.querySelectorAll('.btn-alert-compra').forEach(btn => {
+      btn.addEventListener('click', () => this.addToCompras(btn.dataset));
+    });
+  },
+
+  async addToCompras({ id, nombre, unidad }) {
+    const empleada = Estado.getEmpleada();
+    try {
+      // Comprobar si ya está pendiente
+      const { data } = await sb
+        .from('lista_compra')
+        .select('id')
+        .eq('producto_id', id)
+        .eq('estado', 'pendiente')
+        .limit(1);
+
+      if (data && data.length) {
+        showToast(`"${nombre}" ya está en la lista de compras`, 'info');
+        return;
+      }
+
+      const { error } = await sb.from('lista_compra').insert({
+        producto_id: parseInt(id),
+        empleada,
+        estado: 'pendiente',
+        unidad,
+      });
+      if (error) throw error;
+      showToast(`✓ "${nombre}" añadido a compras`, 'success');
+      this.loadComprasPendientes();
+    } catch (e) {
+      showToast('Error al añadir', 'error');
+    }
   },
 
   async loadComprasPendientes() {
     try {
-      const { data, error } = await sb
+      const { data } = await sb
         .from('lista_compra')
-        .select('id', { count: 'exact' })
+        .select('id')
         .eq('estado', 'pendiente');
 
-      if (error) throw error;
-      const n = data ? data.length : 0;
-      document.getElementById('dash-compras-count').textContent =
-        n > 0 ? `${n} ítem${n !== 1 ? 's' : ''} pendiente${n !== 1 ? 's' : ''} de pedir` : 'No hay ítems pendientes';
-    } catch (e) {
-      document.getElementById('dash-compras-count').textContent = 'Error al cargar';
-    }
+      const n   = data ? data.length : 0;
+      const txt = n > 0 ? `Lista de compras (${n})` : 'Lista de compras';
+      document.getElementById('dash-action-compras').textContent = txt;
+    } catch (e) { /* silencioso */ }
   },
 
   async loadLastConteo() {
     try {
-      // The last conteo is the most recent movimiento of tipo='ajuste' (conteo semanal saves as ajuste)
-      const { data, error } = await sb
+      const { data } = await sb
         .from('movimientos')
         .select('creado_en, empleada')
         .eq('tipo', 'ajuste')
         .order('creado_en', { ascending: false })
         .limit(1);
 
-      if (error) throw error;
-      const el = document.getElementById('last-conteo');
+      const el = document.getElementById('dash-last-conteo-txt');
       if (!data || !data.length) {
-        el.textContent = 'No hay conteos registrados aún';
+        el.textContent = 'Sin conteos';
         return;
       }
-      const mov = data[0];
-      el.innerHTML = `<strong>${fmtFecha(mov.creado_en)}</strong> · por ${mov.empleada || 'Empleada'}`;
+      const d = new Date(data[0].creado_en);
+      el.textContent = d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+      document.getElementById('dash-last-conteo-badge').title =
+        `Último conteo: ${fmtFecha(data[0].creado_en)} por ${data[0].empleada}`;
     } catch (e) {
-      document.getElementById('last-conteo').textContent = 'Error al cargar';
+      document.getElementById('dash-last-conteo-txt').textContent = '–';
     }
   }
 };

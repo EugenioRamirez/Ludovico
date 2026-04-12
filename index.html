@@ -92,41 +92,63 @@
 
       <!-- ── Dashboard ────────────────────────────── -->
       <section id="screen-dashboard" class="screen active">
-        <div class="kpi-grid" id="kpi-grid">
+
+        <!-- Saludo -->
+        <div class="dash-greeting">
+          <div>
+            <div class="dash-greeting-name" id="dash-greeting-name">Hola 👋</div>
+            <div class="dash-greeting-date" id="dash-greeting-date"></div>
+          </div>
+          <div class="dash-last-conteo-badge" id="dash-last-conteo-badge" title="Último conteo">
+            <span>📋</span><span id="dash-last-conteo-txt">–</span>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-grid">
           <div class="kpi" id="kpi-ok">
+            <div class="kpi-icon">✅</div>
             <div class="kpi-val">–</div>
             <div class="kpi-lbl">En stock</div>
           </div>
-          <div class="kpi kpi-warn" id="kpi-low">
+          <div class="kpi" id="kpi-low">
+            <div class="kpi-icon">⚠️</div>
             <div class="kpi-val">–</div>
             <div class="kpi-lbl">Stock bajo</div>
           </div>
-          <div class="kpi kpi-crit" id="kpi-crit">
+          <div class="kpi" id="kpi-crit">
+            <div class="kpi-icon">🚨</div>
             <div class="kpi-val">–</div>
             <div class="kpi-lbl">Crítico</div>
           </div>
         </div>
 
+        <!-- Acciones rápidas -->
+        <div class="dash-actions">
+          <button class="dash-action-btn" onclick="App.nav('conteo')">
+            <span class="dash-action-icon">📋</span>
+            <span>Conteo semanal</span>
+          </button>
+          <button class="dash-action-btn" onclick="App.nav('compras')">
+            <span class="dash-action-icon">🛒</span>
+            <span id="dash-action-compras">Lista de compras</span>
+          </button>
+          <button class="dash-action-btn" onclick="App.nav('inventario')">
+            <span class="dash-action-icon">📦</span>
+            <span>Ver inventario</span>
+          </button>
+          <button class="dash-action-btn" onclick="App.nav('calculadora')">
+            <span class="dash-action-icon">🧮</span>
+            <span>Calculadora</span>
+          </button>
+        </div>
+
+        <!-- Alertas de stock -->
         <div class="card" id="card-alerts">
-          <h3 class="card-title">⚠️ Productos con stock bajo</h3>
+          <h3 class="card-title">🚨 Requieren atención</h3>
           <div id="alerts-list"><div class="empty-msg">Cargando…</div></div>
         </div>
 
-        <div class="card">
-          <h3 class="card-title">📋 Lista de compra pendiente</h3>
-          <div id="dash-compras-count" class="last-conteo">Cargando…</div>
-          <button class="btn btn-outline btn-sm" onclick="App.nav('compras')" style="margin-top:10px">
-            Ver lista →
-          </button>
-        </div>
-
-        <div class="card">
-          <h3 class="card-title">🗓️ Último conteo semanal</h3>
-          <div id="last-conteo" class="last-conteo">Cargando…</div>
-          <button class="btn btn-outline btn-sm" onclick="App.nav('conteo')" style="margin-top:10px">
-            Ir a conteo →
-          </button>
-        </div>
       </section>
 
       <!-- ── Inventario ─────────────────────────── -->
@@ -157,6 +179,8 @@
         <div id="conteo-list">
           <div class="spinner-wrap"><div class="spinner"></div></div>
         </div>
+        <!-- FAB añadir producto desde conteo -->
+        <button class="fab" id="fab-add-desde-conteo" title="Añadir producto al inventario">＋</button>
       </section>
 
       <!-- ── Calculadora de Recetas ───────────────── -->
