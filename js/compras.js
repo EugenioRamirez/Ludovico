@@ -100,7 +100,7 @@ const Compras = {
       const unidad = item.unidad || (item.productos ? item.productos.unidad : '') || '';
       const qty    = item.cantidad != null ? `${fmtNum(item.cantidad)} ${unidad}` : unidad;
 
-      const esPedido = item.estado === 'pedido';
+      const esPendiente = item.estado === 'pendiente';
       return `
         <div class="compra-item" data-id="${item.id}">
           <div class="compra-check-wrap">
@@ -110,12 +110,13 @@ const Compras = {
           </div>
           <div class="compra-info">
             <span class="compra-nombre ${item.estado === 'recibido' ? 'tachado' : ''}">${nombre}</span>
-            ${esPedido ? `
+            ${esPendiente ? `
               <div class="compra-qty-wrap">
                 <input class="compra-qty-input" type="number" min="0" step="0.1"
                   value="${item.cantidad != null ? item.cantidad : ''}"
                   placeholder="Cant." data-id="${item.id}" data-unidad="${unidad}" />
-                <button class="btn-qty-save" data-id="${item.id}">✓ Guardar</button>
+                <span class="compra-qty-unidad">${unidad}</span>
+                <button class="btn-qty-save" data-id="${item.id}">✓</button>
               </div>
             ` : qty ? `<span class="compra-qty">${qty}</span>` : ''}
             ${item.notas ? `<span class="compra-notas">${item.notas}</span>` : ''}

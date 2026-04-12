@@ -34,7 +34,7 @@ const Inventario = {
     try {
       const { data, error } = await sb
         .from('productos')
-        .select('*, categorias(nombre)')
+        .select('*, categorias(nombre), proveedor')
         .eq('activo', true)
         .order('nombre');
       if (error) throw error;
@@ -104,12 +104,15 @@ const Inventario = {
       const cls  = this.stockClass(p);
       const pct  = this.stockBarPct(p);
       const cat  = p.categorias ? p.categorias.nombre : '';
+      const prov = p.proveedor || '';
       return `
         <div class="producto-item" data-id="${p.id}">
           <div class="producto-main">
             <div class="producto-info">
               <span class="producto-nombre">${p.nombre}</span>
-              ${cat ? `<span class="producto-cat">${cat}</span>` : ''}
+              <span class="producto-cat">
+                ${cat}${cat && prov ? ' · ' : ''}${prov ? `<span class="producto-prov">${prov}</span>` : ''}
+              </span>
             </div>
             <div class="producto-stock-wrap">
               <span class="badge badge-${cls}">
@@ -186,6 +189,7 @@ const Inventario = {
     document.getElementById('prod-categoria').value   = prod ? (prod.categoria_id || '') : '';
     document.getElementById('prod-unidad').value      = prod ? prod.unidad : 'kg';
     document.getElementById('prod-stock-min').value   = prod ? prod.stock_minimo : '';
+    document.getElementById('prod-proveedor').value   = prod ? (prod.proveedor || '') : '';
     document.getElementById('prod-notas').value       = prod ? (prod.notas || '') : '';
 
     openModal('modal-producto-overlay');
@@ -193,11 +197,12 @@ const Inventario = {
 
   async saveProducto() {
     const id       = document.getElementById('prod-id').value;
-    const nombre   = document.getElementById('prod-nombre').value.trim();
-    const catId    = document.getElementById('prod-categoria').value || null;
-    const unidad   = document.getElementById('prod-unidad').value;
-    const stockMin = parseFloat(document.getElementById('prod-stock-min').value) || 0;
-    const notas    = document.getElementById('prod-notas').value.trim() || null;
+    const nombre    = document.getElementById('prod-nombre').value.trim();
+    const catId     = document.getElementById('prod-categoria').value || null;
+    const unidad    = document.getElementById('prod-unidad').value;
+    const stockMin  = parseFloat(document.getElementById('prod-stock-min').value) || 0;
+    const proveedor = document.getElementById('prod-proveedor').value || null;
+    const notas     = document.getElementById('prod-notas').value.trim() || null;
 
     if (!nombre) { showToast('El nombre es obligatorio', 'error'); return; }
 
@@ -206,7 +211,7 @@ const Inventario = {
     btn.textContent = 'Guardando…';
 
     try {
-      const payload = { nombre, categoria_id: catId, unidad, stock_minimo: stockMin, notas };
+      const payload = { nombre, categoria_id: catId, unidad, stock_minimo: stockMin, proveedor, notas };
 
       if (id) {
         const { error } = await sb.from('productos').update(payload).eq('id', id);

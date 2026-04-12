@@ -367,6 +367,7 @@ select {
 .producto-nombre { font-size: 14px; font-weight: 700; display: block; }
 .producto-cat    { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .producto-stock-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.producto-prov { color: var(--cyan); font-weight: 700; }
 .stock-min-lbl   { font-size: 10px; color: var(--text-muted); }
 
 .stock-bar  { height: 5px; border-radius: 3px; background: var(--border); overflow: hidden; margin-bottom: 8px; }
@@ -505,15 +506,16 @@ select {
    ══════════════════════════════════════════════════════════════ */
 
 /* Pantalla compras - edición inline de cantidad */
-.compra-qty-wrap { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+.compra-qty-wrap { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
 .compra-qty-input {
-  width: 80px; padding: 5px 8px; font-size: 14px; font-weight: 700;
+  width: 72px; padding: 6px 8px; font-size: 15px; font-weight: 700;
   border: 2px solid var(--cyan); border-radius: 8px; text-align: center;
 }
+.compra-qty-unidad { font-size: 12px; color: var(--text-muted); font-weight: 600; }
 .btn-qty-save {
-  padding: 5px 10px; font-size: 11px; font-weight: 700;
+  padding: 6px 12px; font-size: 13px; font-weight: 700;
   background: var(--cyan); color: white; border: none;
-  border-radius: 8px; cursor: pointer;
+  border-radius: 8px; cursor: pointer; min-width: 36px;
 }
 
 @media (max-width: 480px) {
