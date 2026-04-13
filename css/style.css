@@ -645,3 +645,137 @@ select {
   .nav-item span { display: none; }
   .nav-item { padding: 10px 0; }
 }
+
+/* ── Producción · Kanban ────────────────────────────────────────────────────── */
+
+.prod-header { padding: 16px 16px 0; }
+.prod-title  { font-size: 1.1rem; font-weight: 700; color: var(--txt); margin: 0 0 12px; }
+
+.kanban-board {
+  display: flex;
+  gap: 12px;
+  padding: 0 12px 24px;
+  overflow-x: auto;
+  align-items: flex-start;
+  -webkit-overflow-scrolling: touch;
+}
+
+.kanban-col {
+  flex: 0 0 240px;
+  background: var(--surface);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+.kanban-col-header {
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: .02em;
+}
+.kanban-mix          { background: #7c5c00; color: #FFD54F; }
+.kanban-cremando     { background: #0d3b6e; color: #90CAF9; }
+.kanban-venta        { background: #1b5e20; color: #A5D6A7; }
+.kanban-comercializado { background: #333; color: #ccc; }
+
+.kanban-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  min-height: 80px;
+}
+
+.kanban-loading,
+.kanban-empty {
+  font-size: 0.8rem;
+  color: var(--txt-muted);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.kanban-card {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.kcard-sabor  { font-weight: 700; font-size: 0.9rem; color: var(--txt); }
+.kcard-info   { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.kcard-litros { font-size: 0.82rem; color: var(--cyan); font-weight: 600; }
+.kcard-fecha  { font-size: 0.75rem; color: var(--txt-muted); }
+.kcard-notas  { font-size: 0.75rem; color: var(--txt-muted); font-style: italic; }
+
+.kcard-badge {
+  font-size: 0.7rem;
+  background: rgba(255,255,255,0.1);
+  color: var(--txt-muted);
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+.kcard-badge-blue { background: rgba(33,150,243,0.2); color: #90CAF9; }
+
+.btn-kaction {
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  margin-top: 4px;
+  text-align: left;
+}
+.btn-kaction:hover  { opacity: .82; }
+.btn-cremar         { background: #7c5c00; color: #FFD54F; }
+.btn-comercializar  { background: #1b5e20; color: #A5D6A7; }
+.btn-baja           { background: #4a1212; color: #EF9A9A; }
+
+/* Botón verde Preparar Mix en calculadora */
+.btn-green {
+  background: #1b5e20;
+  color: #A5D6A7;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .2s;
+  margin-top: 12px;
+}
+.btn-green:hover { opacity: .85; }
+.btn-full { width: 100%; display: block; }
+
+/* Estilos para modales de producción (reutilizan .modal-overlay, .modal-sheet) */
+.modal-sheet .form-group        { margin-bottom: 14px; }
+.modal-sheet .form-group label  { display: block; font-size: 0.82rem; color: var(--txt-muted); margin-bottom: 4px; }
+.modal-sheet .form-group small  { color: var(--txt-muted); font-size: 0.75rem; }
+.modal-sheet .form-input        { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); color: var(--txt); font-size: 0.95rem; box-sizing: border-box; }
+.modal-sheet .modal-title       { font-size: 1.1rem; font-weight: 700; margin: 0 0 4px; }
+.modal-sheet .modal-subtitle    { font-size: 0.85rem; color: var(--cyan); margin: 0 0 16px; }
+.modal-sheet .modal-actions     { display: flex; gap: 10px; margin-top: 18px; }
+.modal-sheet .btn-primary       { flex: 1; padding: 12px; background: var(--orange); color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+.modal-sheet .btn-secondary     { padding: 12px 16px; background: rgba(255,255,255,0.08); color: var(--txt); border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
+.modal-sheet .btn-danger        { flex: 1; padding: 12px; background: #b71c1c; color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
+
+#prod-modal-overlay .modal-sheet {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 480px) {
+  .kanban-col { flex: 0 0 200px; }
+  #prod-modal-overlay .modal-sheet { border-radius: 18px 18px 0 0; }
+}
