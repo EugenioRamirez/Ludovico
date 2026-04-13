@@ -66,6 +66,12 @@ const Produccion = {
 
         <div class="prod-seccion-lbl">Detalle del periodo</div>
         <div id="prod-hist-list"><div class="prod-loading">Cargando…</div></div>
+
+        ${this.esAdmin() ? `
+        <div class="prod-admin-zona">
+          <div class="prod-admin-lbl">⚙️ Zona Administrador</div>
+          <button class="prod-btn-danger" onclick="Produccion.borrarHistoricoVentas()">🗑️ Borrar historial de comercializados</button>
+        </div>` : ''}
       </div>`;
 
     await this.renderOperativa();
@@ -397,6 +403,34 @@ const Produccion = {
     document.getElementById('modal-prod-fecha').value            = this.hoy();
     document.getElementById('modal-prod-notas').value            = '';
     openModal('modal-prod-overlay');
+  },
+
+  // ── Admin: borrar todos los datos ───────────────────────────────────────
+  esAdmin() {
+    return Estado.getEmpleada() === 'Administrador';
+  },
+
+  async borrarHistoricoVentas() {
+    if (!this.esAdmin()) return;
+    const ok = confirm('⚠️ ¿Borrar todo el historial de comercializados?\n\nEsto eliminará todos los registros de lotes_venta.\nLos mixes y lotes en congelación no se borran.\nEsta acción no se puede deshacer.');
+    if (!ok) return;
+
+    const btn = document.querySelector('.prod-btn-danger');
+    if (btn) { btn.disabled = true; btn.textContent = 'Borrando…'; }
+
+    try {
+      const { error } = await sb.from('lotes_venta').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) throw error;
+
+      // Resetear litros_comercializados en lotes_cremado
+      await sb.from('lotes_cremado').update({ litros_comercializados: 0 }).neq('id', '00000000-0000-0000-0000-000000000000');
+
+      showToast('Historial de comercializados eliminado ✓');
+      await Produccion.load();
+    } catch (err) {
+      showToast('Error al borrar: ' + (err.message || err), 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '🗑️ Borrar historial de comercializados'; }
+    }
   },
 
   // ── Helpers ──────────────────────────────────────────────────────────────
