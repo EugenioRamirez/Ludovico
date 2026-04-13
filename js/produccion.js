@@ -30,11 +30,6 @@ const Produccion = {
         </div>
       </div>`;
 
-    // Bind modal botones (una sola vez)
-    document.getElementById('btn-cancel-prod').onclick = () => closeModal('modal-prod-overlay');
-    document.getElementById('modal-prod-close').onclick = () => closeModal('modal-prod-overlay');
-    document.getElementById('btn-save-prod').onclick   = () => this.ejecutarAccion();
-
     await this.renderAll();
   },
 

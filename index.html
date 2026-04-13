@@ -377,7 +377,7 @@
     <div class="modal" id="modal-prod">
       <div class="modal-header">
         <h3 id="modal-prod-title">Acción</h3>
-        <button class="modal-close" id="modal-prod-close">✕</button>
+        <button class="modal-close" id="modal-prod-close" onclick="closeModal('modal-prod-overlay')">✕</button>
       </div>
       <div class="modal-body">
         <p id="modal-prod-subtitle" style="font-size:13px;color:var(--cyan);margin:-4px 0 14px;font-weight:600;"></p>
@@ -395,8 +395,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-ghost" id="btn-cancel-prod">Cancelar</button>
-        <button class="btn btn-primary" id="btn-save-prod">Guardar</button>
+        <button class="btn btn-ghost" id="btn-cancel-prod" onclick="closeModal('modal-prod-overlay')">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-prod" onclick="Produccion.ejecutarAccion()">Guardar</button>
       </div>
     </div>
   </div>
