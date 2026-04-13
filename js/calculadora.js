@@ -114,11 +114,27 @@ const Calculadora = {
         if (e.key === 'Enter') this.calcular();
       });
 
-      // ── Botón Añadir Mix ──────────────────────────────────────────────────
-      const btnAdd = document.getElementById('calc-add-btn');
-      if (btnAdd) {
-        btnAdd.addEventListener('click', () => this.añadirMix());
+      // ── Botón Añadir Mix: crear si no existe en el HTML ───────────────────
+      let btnAdd = document.getElementById('calc-add-btn');
+      if (!btnAdd) {
+        btnAdd = document.createElement('button');
+        btnAdd.id        = 'calc-add-btn';
+        btnAdd.type      = 'button';
+        btnAdd.disabled  = true;
+        btnAdd.innerHTML = '🧪 Añadir Mix a Producción';
+        btnAdd.style.cssText = [
+          'display:block', 'width:100%', 'margin-top:16px',
+          'padding:14px 20px', 'border:none', 'border-radius:10px',
+          'background:#1abc9c', 'color:#fff', 'font-size:1rem',
+          'font-weight:700', 'cursor:pointer', 'transition:opacity .2s'
+        ].join(';');
+        btnAdd.onmouseover = () => { if (!btnAdd.disabled) btnAdd.style.opacity = '.85'; };
+        btnAdd.onmouseout  = () => { btnAdd.style.opacity = '1'; };
+
+        const resultEl = document.getElementById('calc-result');
+        if (resultEl) resultEl.appendChild(btnAdd);
       }
+      btnAdd.addEventListener('click', () => this.añadirMix());
 
       this.init = true;
     }
