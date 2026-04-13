@@ -661,8 +661,8 @@ select {
 }
 
 .kanban-col {
-  flex: 0 0 240px;
-  background: var(--surface);
+  flex: 0 0 175px;
+  background: #fff;
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.18);
@@ -735,7 +735,7 @@ select {
 .btn-kaction:hover  { opacity: .82; }
 .btn-cremar         { background: #7c5c00; color: #FFD54F; }
 .btn-comercializar  { background: #1b5e20; color: #A5D6A7; }
-.btn-baja           { background: #4a1212; color: #EF9A9A; }
+.btn-vendido        { background: #4a1212; color: #EF9A9A; }
 
 /* Botón verde Preparar Mix en calculadora */
 .btn-green {
@@ -777,7 +777,24 @@ select {
   box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 }
 
+/* Histórico de ventas */
+.historico-section { padding: 0 12px 32px; }
+.historico-title   { font-size: 0.95rem; font-weight: 700; color: #333; margin: 0 0 10px; }
+.historico-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #fff;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.hist-sabor  { font-weight: 600; font-size: 0.85rem; color: #333; }
+.hist-fecha  { font-size: 0.75rem; color: #888; margin-top: 2px; }
+.hist-litros { font-weight: 700; font-size: 0.9rem; color: #1b5e20; white-space: nowrap; }
+
 @media (max-width: 480px) {
-  .kanban-col { flex: 0 0 200px; }
+  .kanban-col { flex: 0 0 160px; }
   #prod-modal-overlay .modal-sheet { border-radius: 18px 18px 0 0; }
 }

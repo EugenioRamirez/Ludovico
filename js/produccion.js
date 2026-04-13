@@ -9,7 +9,7 @@ const Produccion = {
     const el = document.getElementById('screen-produccion');
     el.innerHTML = `
       <div style="padding:14px 14px 6px">
-        <div style="font-size:1rem;font-weight:700;">Control de Producción</div>
+        <div style="font-size:1rem;font-weight:700;color:#333;">Control de Producción</div>
       </div>
       <div class="kanban-board" id="kanban-board">
         <div class="kanban-col">
@@ -17,7 +17,7 @@ const Produccion = {
           <div class="kanban-cards" id="cards-mixes"><div class="kanban-loading">Cargando…</div></div>
         </div>
         <div class="kanban-col">
-          <div class="kanban-col-header kanban-cremando">🔵 Cremando hoy</div>
+          <div class="kanban-col-header kanban-cremando">🔵 Cremando</div>
           <div class="kanban-cards" id="cards-cremando"><div class="kanban-loading">Cargando…</div></div>
         </div>
         <div class="kanban-col">
@@ -25,9 +25,13 @@ const Produccion = {
           <div class="kanban-cards" id="cards-venta"><div class="kanban-loading">Cargando…</div></div>
         </div>
         <div class="kanban-col">
-          <div class="kanban-col-header kanban-comercializado">⚪ Comercializados</div>
+          <div class="kanban-col-header kanban-comercializado">⚪ Vitrina</div>
           <div class="kanban-cards" id="cards-comercializados"><div class="kanban-loading">Cargando…</div></div>
         </div>
+      </div>
+      <div class="historico-section">
+        <div class="historico-title">📋 Histórico de ventas</div>
+        <div id="historico-list"><div class="kanban-loading">Cargando…</div></div>
       </div>`;
 
     await this.renderAll();
@@ -39,7 +43,8 @@ const Produccion = {
       this.renderMixes(),
       this.renderCremando(),
       this.renderEnVenta(),
-      this.renderComercializados()
+      this.renderComercializados(),
+      this.renderHistorico()
     ]);
   },
 
@@ -124,9 +129,9 @@ const Produccion = {
         </div>
         <div class="kcard-fecha">Desde: ${this.fmtF(v.fecha_comercializacion)}</div>
         ${v.notas ? `<div class="kcard-notas">${v.notas}</div>` : ''}
-        <button class="btn-kaction btn-baja"
+        <button class="btn-kaction btn-vendido"
           onclick="Produccion.abrirModal('baja','${v.id}','${v.receta_nombre.replace(/'/g,"\\'")}',${v.litros_restantes})">
-          Dar de baja
+          ✓ Vendido
         </button>
       </div>`).join('');
   },
@@ -232,6 +237,32 @@ const Produccion = {
     this.abrirModal('mix', null, nombre, 9999);
     document.getElementById('modal-prod-litros').value = litros;
     document.getElementById('modal-prod-litros').max   = 9999;
+  },
+
+  // ── Histórico de ventas ──────────────────────────────────────────────────
+  async renderHistorico() {
+    const cont = document.getElementById('historico-list');
+    if (!cont) return;
+    const { data } = await sb.from('lotes_venta')
+      .select('*')
+      .order('fecha_comercializacion', { ascending: false })
+      .limit(30);
+    if (!data || !data.length) {
+      cont.innerHTML = '<div class="kanban-empty" style="text-align:left;padding:8px 0">Sin ventas registradas aún</div>';
+      return;
+    }
+    cont.innerHTML = data.map(v => {
+      const vendidos = +(v.litros - v.litros_restantes).toFixed(2);
+      const estado   = v.litros_restantes <= 0 ? '✅ Agotado' : `🟡 ${v.litros_restantes}L en vitrina`;
+      return `
+        <div class="historico-item">
+          <div>
+            <div class="hist-sabor">${v.receta_nombre}</div>
+            <div class="hist-fecha">${this.fmtF(v.fecha_comercializacion)} · ${estado}</div>
+          </div>
+          <div class="hist-litros">${vendidos > 0 ? vendidos + 'L vendidos' : v.litros + 'L'}</div>
+        </div>`;
+    }).join('');
   },
 
   // ── Helpers ──────────────────────────────────────────────────────────────
