@@ -766,13 +766,15 @@ select {
 .modal-sheet .btn-danger        { flex: 1; padding: 12px; background: #b71c1c; color: #fff; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; }
 
 #prod-modal-overlay .modal-sheet {
-  background: var(--surface);
+  background: #0D3F6B;
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: 18px;
   padding: 24px;
-  width: 100%;
+  width: calc(100% - 32px);
   max-width: 420px;
   max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
 }
 
 @media (max-width: 480px) {

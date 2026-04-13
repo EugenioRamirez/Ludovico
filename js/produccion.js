@@ -335,7 +335,7 @@ const Produccion = {
       receta_nombre: nombre, litros, fecha,
       notas: notas || null
     });
-    if (error) { showToast('Error al guardar mix', 'error'); return; }
+    if (error) { showToast('Error: ' + (error.message || error.code || 'sin tabla'), 'error'); return; }
 
     this.closeModal();
     showToast(`Mix de ${nombre} (${litros}L) registrado ✓`);
