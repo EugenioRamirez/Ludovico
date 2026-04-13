@@ -104,6 +104,7 @@ const RECETAS = [
 const Calculadora = {
 
   init: false,
+  _ultimoCalculo: null,   // guarda el último resultado para el botón Añadir Mix
 
   load() {
     if (!this.init) {
@@ -112,6 +113,13 @@ const Calculadora = {
       document.getElementById('calc-litros').addEventListener('keydown', e => {
         if (e.key === 'Enter') this.calcular();
       });
+
+      // ── Botón Añadir Mix ──────────────────────────────────────────────────
+      const btnAdd = document.getElementById('calc-add-btn');
+      if (btnAdd) {
+        btnAdd.addEventListener('click', () => this.añadirMix());
+      }
+
       this.init = true;
     }
   },
@@ -178,8 +186,57 @@ const Calculadora = {
     if (r.nota) { notaEl.textContent = '⚠️ ' + r.nota; notaEl.classList.remove('hidden'); }
     else { notaEl.classList.add('hidden'); }
 
+    // Guardar datos del cálculo actual
+    this._ultimoCalculo = {
+      receta:      r,
+      litros,
+      factor,
+      totalCalc,
+      ingredientesCalculados: r.ingredientes.map(([nombre, g]) => ({
+        nombre,
+        cantidad: g ? Math.round(g * factor) : null
+      }))
+    };
+
+    // Habilitar el botón Añadir Mix
+    const btnAdd = document.getElementById('calc-add-btn');
+    if (btnAdd) btnAdd.disabled = false;
+
     // Mostrar resultado
     document.getElementById('calc-empty').classList.add('hidden');
     document.getElementById('calc-result').classList.remove('hidden');
+  },
+
+  // ── Añadir Mix al registro de producción ─────────────────────────────────
+  añadirMix() {
+    if (!this._ultimoCalculo) return;
+
+    const { receta, litros, factor, totalCalc, ingredientesCalculados } = this._ultimoCalculo;
+
+    const nuevoMix = {
+      id:          Date.now(),
+      fecha:       new Date().toISOString(),
+      nombre:      receta.nombre,
+      categoria:   receta.categoria,
+      litros,
+      factor:      parseFloat(factor.toFixed(2)),
+      totalMezcla: Math.round(totalCalc),
+      ingredientes: ingredientesCalculados
+    };
+
+    // Guardar en localStorage bajo la clave 'ludovico_mixes'
+    const mixes = JSON.parse(localStorage.getItem('ludovico_mixes') || '[]');
+    mixes.unshift(nuevoMix);   // más reciente primero
+    localStorage.setItem('ludovico_mixes', JSON.stringify(mixes));
+
+    // Notificar al resto de la app (conteo, producción, etc.)
+    document.dispatchEvent(new CustomEvent('mixAñadido', { detail: nuevoMix }));
+
+    // Feedback visual
+    showToast(`✅ Mix "${receta.nombre}" (${litros} L) añadido a producción`, 'success');
+
+    // Deshabilitar el botón hasta la próxima calculación
+    const btnAdd = document.getElementById('calc-add-btn');
+    if (btnAdd) btnAdd.disabled = true;
   }
 };
