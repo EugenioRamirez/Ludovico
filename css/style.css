@@ -646,113 +646,92 @@ select {
   .nav-item { padding: 10px 0; }
 }
 
-/* ── Dashboard KPIs Producción ───────────────────────────────────────────────── */
-.prod-kpi-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-.prod-kpi {
-  background: rgba(0,180,204,0.08);
-  border-radius: 10px;
-  padding: 10px 12px;
-  text-align: center;
-}
-.prod-kpi-val { font-size: 1.4rem; font-weight: 800; color: var(--cyan); }
-.prod-kpi-lbl { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
 
-.prod-dash-sabor {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.82rem;
-  padding: 5px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-  color: var(--txt);
-}
+/* ── Dashboard KPIs Producción (tarjeta en dashboard) ───────────────────────── */
+.prod-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.prod-kpi { background: rgba(0,180,204,0.08); border-radius: 10px; padding: 10px 12px; text-align: center; }
+.prod-kpi-val { font-size: 1.4rem; font-weight: 800; color: var(--cyan); }
+.prod-kpi-lbl { font-size: 0.7rem; color: #666; margin-top: 2px; }
+.prod-dash-sabor { display: flex; justify-content: space-between; font-size: 0.82rem; padding: 5px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
 .prod-dash-litros { font-weight: 700; color: var(--cyan); }
 
-/* ── Producción · Nueva UI ──────────────────────────────────────────────────── */
+/* ── Producción · Pantalla completa ─────────────────────────────────────────── */
 
 /* Tabs */
-.prod-tabs { display: flex; border-bottom: 2px solid rgba(255,255,255,0.08); margin-bottom: 14px; }
-.prod-tab  { flex: 1; padding: 11px 0; text-align: center; font-size: 0.85rem; font-weight: 700; color: var(--txt-muted); background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; cursor: pointer; transition: all .15s; }
+.prod-tabs { display: flex; border-bottom: 2px solid rgba(0,0,0,0.08); margin-bottom: 14px; }
+.prod-tab  { flex: 1; padding: 11px 0; text-align: center; font-size: 0.85rem; font-weight: 700; color: #999; background: none; border: none; border-bottom: 3px solid transparent; margin-bottom: -2px; cursor: pointer; transition: all .15s; }
 .prod-tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
 
 /* KPIs operativa */
 .prod-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; padding: 0 12px 14px; }
-.prod-kpi-box { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 10px 6px; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
-.prod-kpi-v   { font-size: 1.5rem; font-weight: 800; line-height: 1; }
-.prod-kpi-l   { font-size: 0.58rem; color: var(--txt-muted); margin-top: 4px; line-height: 1.3; }
-.prod-kpi-mix  .prod-kpi-v { color: #FFD54F; }
-.prod-kpi-cong .prod-kpi-v { color: #90CAF9; }
-.prod-kpi-list .prod-kpi-v { color: #A5D6A7; }
-.prod-kpi-com  .prod-kpi-v { color: #CE93D8; }
+.prod-kpi-box { background: #fff; border-radius: 12px; padding: 10px 6px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.10); border-top: 3px solid transparent; }
+.prod-kpi-v   { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+.prod-kpi-l   { font-size: 0.56rem; color: #888; margin-top: 4px; line-height: 1.3; }
+.prod-kpi-mix  { border-top-color: #F5A623; } .prod-kpi-mix  .prod-kpi-v { color: #c47d00; }
+.prod-kpi-cong { border-top-color: #1565A0; } .prod-kpi-cong .prod-kpi-v { color: #1565A0; }
+.prod-kpi-list { border-top-color: #2e7d32; } .prod-kpi-list .prod-kpi-v { color: #2e7d32; }
+.prod-kpi-com  { border-top-color: #6a1b9a; } .prod-kpi-com  .prod-kpi-v { color: #6a1b9a; }
 
 /* Filtros */
 .prod-filtros { display: flex; gap: 6px; padding: 0 12px 12px; flex-wrap: wrap; }
-.prod-filtro  { padding: 5px 11px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.15); background: transparent; color: var(--txt-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+.prod-filtro  { padding: 5px 11px; border-radius: 20px; border: 1.5px solid #ccc; background: #fff; color: #666; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all .15s; }
 .prod-filtro.active { background: var(--cyan); border-color: var(--cyan); color: #fff; }
 
 /* Lista lotes */
 #prod-lotes-list { padding: 0 12px 24px; }
-.prod-lote {
-  display: flex; align-items: center; gap: 10px;
-  background: rgba(255,255,255,0.05); border-radius: 12px;
-  padding: 11px 12px; margin-bottom: 8px;
-  border-left: 4px solid transparent;
-}
-.prod-lote.estado-mix   { border-color: #FFD54F; }
-.prod-lote.estado-congel{ border-color: #90CAF9; }
-.prod-lote.estado-listo { border-color: #A5D6A7; }
-.prod-lote.estado-comerc{ border-color: #CE93D8; }
-.prod-lote-color { display: none; }
-.prod-lote-ico   { font-size: 1.2rem; flex-shrink: 0; }
-.prod-lote-info  { flex: 1; min-width: 0; }
-.prod-lote-nombre{ font-weight: 700; font-size: 0.88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.prod-lote-meta  { font-size: 0.7rem; color: var(--txt-muted); margin-top: 3px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.prod-lote-accion{ display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
-.prod-lote-litros{ font-weight: 800; font-size: 0.85rem; color: var(--cyan); }
-.prod-lote-nota  { font-size: 0.65rem; color: #90CAF9; }
-.prod-loading    { font-size: 0.82rem; color: var(--txt-muted); padding: 20px 12px; }
-.prod-empty      { font-size: 0.82rem; color: var(--txt-muted); padding: 20px 0; text-align: center; }
-.prod-seccion-lbl{ font-size: 0.7rem; font-weight: 700; color: var(--txt-muted); text-transform: uppercase; letter-spacing: .06em; padding: 0 12px; margin-bottom: 8px; }
+.prod-lote { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 12px; padding: 11px 12px; margin-bottom: 8px; border-left: 4px solid transparent; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.prod-lote.estado-mix    { border-color: #F5A623; }
+.prod-lote.estado-congel { border-color: #1565A0; }
+.prod-lote.estado-listo  { border-color: #2e7d32; }
+.prod-lote.estado-comerc { border-color: #6a1b9a; }
+.prod-lote-color  { display: none; }
+.prod-lote-ico    { font-size: 1.2rem; flex-shrink: 0; }
+.prod-lote-info   { flex: 1; min-width: 0; }
+.prod-lote-nombre { font-weight: 700; font-size: 0.88rem; color: #1a2a3a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prod-lote-meta   { font-size: 0.7rem; color: #888; margin-top: 3px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.prod-lote-accion { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.prod-lote-litros { font-weight: 800; font-size: 0.85rem; color: var(--cyan); }
+.prod-lote-nota   { font-size: 0.65rem; color: #1565A0; }
+.prod-loading     { font-size: 0.82rem; color: #888; padding: 20px 12px; }
+.prod-empty       { font-size: 0.82rem; color: #888; padding: 20px 0; text-align: center; }
+.prod-seccion-lbl { font-size: 0.7rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .06em; padding: 0 12px; margin-bottom: 8px; }
 
 /* Badges lotes */
-.plote-badge        { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.62rem; font-weight: 700; }
-.badge-mix          { background: rgba(255,213,79,.2);  color: #FFD54F; }
-.badge-congel       { background: rgba(144,202,249,.2); color: #90CAF9; }
-.badge-listo        { background: rgba(165,214,167,.2); color: #A5D6A7; }
-.badge-comerc       { background: rgba(206,147,216,.2); color: #CE93D8; }
+.plote-badge  { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 0.62rem; font-weight: 700; }
+.badge-mix    { background: #fff3e0; color: #c47d00; }
+.badge-congel { background: #e3f2fd; color: #1565A0; }
+.badge-listo  { background: #e8f5e9; color: #2e7d32; }
+.badge-comerc { background: #f3e5f5; color: #6a1b9a; }
 
 /* Botones acción lotes */
 .prod-btn-accion  { padding: 5px 10px; border: none; border-radius: 8px; font-size: 0.72rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
-.prod-btn-mix     { background: #7c5c00; color: #FFD54F; }
-.prod-btn-listo   { background: #1b5e20; color: #A5D6A7; }
-.prod-btn-vendido { background: #4a1212; color: #EF9A9A; }
+.prod-btn-mix     { background: #fff3e0; color: #c47d00; }
+.prod-btn-listo   { background: #e8f5e9; color: #2e7d32; }
+.prod-btn-vendido { background: #fce4ec; color: #b71c1c; }
 
-/* Histórico */
+/* ── Histórico ───────────────────────────────────────────────────────────────── */
 .prod-periodo-sel  { display: flex; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
-.prod-periodo-btn  { padding: 5px 12px; border-radius: 20px; border: 1.5px solid rgba(255,255,255,0.15); background: transparent; color: var(--txt-muted); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+.prod-periodo-btn  { padding: 5px 12px; border-radius: 20px; border: 1.5px solid #ccc; background: #fff; color: #666; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all .15s; }
 .prod-periodo-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
-.prod-periodo-info { font-size: 0.72rem; color: var(--txt-muted); padding: 0 12px 10px; }
-.prod-rango-custom { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px; margin: 0 12px 12px; }
-.prod-rango-fields { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-.prod-rango-fields label { display: block; font-size: 0.72rem; color: var(--txt-muted); margin-bottom: 4px; }
-.prod-rango-fields input[type=date] { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; color: var(--txt); padding: 6px 10px; font-size: 0.8rem; width: 100%; }
+.prod-periodo-info { font-size: 0.72rem; color: #888; padding: 0 12px 10px; }
 
-.prod-hist-kpis   { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 0 12px 14px; }
-.prod-hist-kpi    { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 10px 6px; text-align: center; }
-.prod-hist-kpi-v  { font-size: 1.4rem; font-weight: 800; color: #F48FB1; }
-.prod-hist-kpi-l  { font-size: 0.6rem; color: var(--txt-muted); margin-top: 3px; }
+.prod-rango-custom { background: #fff; border-radius: 10px; padding: 12px; margin: 0 12px 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.prod-rango-fields { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.prod-rango-fields label { display: block; font-size: 0.72rem; color: #888; margin-bottom: 4px; }
+.prod-rango-fields input[type=date] { background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; color: #333; padding: 6px 10px; font-size: 0.8rem; width: 100%; }
+
+.prod-hist-kpis  { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; padding: 0 12px 14px; }
+.prod-hist-kpi   { background: #fff; border-radius: 12px; padding: 10px 6px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.prod-hist-kpi-v { font-size: 1.4rem; font-weight: 800; color: var(--orange); }
+.prod-hist-kpi-l { font-size: 0.6rem; color: #888; margin-top: 3px; }
 
 #prod-hist-list   { padding: 0 12px 24px; }
-.prod-hist-item   { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 11px 14px; margin-bottom: 6px; border-left: 3px solid #CE93D8; }
+.prod-hist-item   { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 10px; padding: 11px 14px; margin-bottom: 6px; border-left: 3px solid #6a1b9a; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 .prod-hist-info   { flex: 1; min-width: 0; }
-.prod-hist-nombre { font-weight: 700; font-size: 0.88rem; }
-.prod-hist-meta   { font-size: 0.7rem; color: var(--txt-muted); margin-top: 2px; }
+.prod-hist-nombre { font-weight: 700; font-size: 0.88rem; color: #1a2a3a; }
+.prod-hist-meta   { font-size: 0.7rem; color: #888; margin-top: 2px; }
 .prod-hist-right  { text-align: right; flex-shrink: 0; }
-.prod-hist-litros { font-weight: 800; font-size: 0.88rem; color: #A5D6A7; }
+.prod-hist-litros { font-weight: 800; font-size: 0.88rem; color: #2e7d32; }
 .prod-hist-estado { font-size: 0.65rem; margin-top: 2px; }
-.hist-agotado     { color: #F48FB1; }
-.hist-parcial     { color: #FFD54F; }
+.hist-agotado     { color: #b71c1c; }
+.hist-parcial     { color: #c47d00; }
