@@ -44,7 +44,7 @@ const Produccion = {
   },
 
   async renderMixes() {
-    const { data } = await supabase.from('lotes_mix').select('*').order('fecha', { ascending: false });
+    const { data } = await sb.from('lotes_mix').select('*').order('fecha', { ascending: false });
     const cont = document.getElementById('cards-mixes');
     if (!data) { cont.innerHTML = '<div class="kanban-empty">Error</div>'; return; }
     const activos = data.filter(m => (m.litros - (m.litros_cremados || 0)) > 0.001);
@@ -69,7 +69,7 @@ const Produccion = {
 
   async renderCremando() {
     const hoy = this.hoy();
-    const { data } = await supabase.from('lotes_cremado').select('*').eq('fecha_cremado', hoy).order('created_at', { ascending: false });
+    const { data } = await sb.from('lotes_cremado').select('*').eq('fecha_cremado', hoy).order('created_at', { ascending: false });
     const cont = document.getElementById('cards-cremando');
     if (!data) { cont.innerHTML = '<div class="kanban-empty">Error</div>'; return; }
     if (!data.length) { cont.innerHTML = '<div class="kanban-empty">Nada cremando hoy</div>'; return; }
@@ -87,7 +87,7 @@ const Produccion = {
 
   async renderEnVenta() {
     const hoy = this.hoy();
-    const { data } = await supabase.from('lotes_cremado').select('*').lt('fecha_cremado', hoy).order('fecha_cremado', { ascending: false });
+    const { data } = await sb.from('lotes_cremado').select('*').lt('fecha_cremado', hoy).order('fecha_cremado', { ascending: false });
     const cont = document.getElementById('cards-venta');
     if (!data) { cont.innerHTML = '<div class="kanban-empty">Error</div>'; return; }
     const listos = data.filter(c => (c.litros - (c.litros_comercializados || 0)) > 0.001);
@@ -111,7 +111,7 @@ const Produccion = {
   },
 
   async renderComercializados() {
-    const { data } = await supabase.from('lotes_venta').select('*').gt('litros_restantes', 0).order('fecha_comercializacion', { ascending: false });
+    const { data } = await sb.from('lotes_venta').select('*').gt('litros_restantes', 0).order('fecha_comercializacion', { ascending: false });
     const cont = document.getElementById('cards-comercializados');
     if (!data) { cont.innerHTML = '<div class="kanban-empty">Error</div>'; return; }
     if (!data.length) { cont.innerHTML = '<div class="kanban-empty">Sin lotes activos</div>'; return; }
@@ -190,37 +190,37 @@ const Produccion = {
   },
 
   async _guardarMix(nombre, litros, fecha, notas) {
-    const { error } = await supabase.from('lotes_mix').insert({ receta_nombre: nombre, litros, fecha, notas });
+    const { error } = await sb.from('lotes_mix').insert({ receta_nombre: nombre, litros, fecha, notas });
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
     closeModal('modal-prod-overlay');
     showToast(`Mix de ${nombre} (${litros}L) registrado ✓`);
   },
 
   async _guardarCremado(mixId, nombre, litros, fecha, notas) {
-    const { error } = await supabase.from('lotes_cremado').insert({ mix_id: mixId, receta_nombre: nombre, litros, fecha_cremado: fecha, notas });
+    const { error } = await sb.from('lotes_cremado').insert({ mix_id: mixId, receta_nombre: nombre, litros, fecha_cremado: fecha, notas });
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
     // Actualizar litros_cremados en el mix
-    const { data: mix } = await supabase.from('lotes_mix').select('litros_cremados').eq('id', mixId).single();
-    await supabase.from('lotes_mix').update({ litros_cremados: +((mix?.litros_cremados || 0) + litros).toFixed(2) }).eq('id', mixId);
+    const { data: mix } = await sb.from('lotes_mix').select('litros_cremados').eq('id', mixId).single();
+    await sb.from('lotes_mix').update({ litros_cremados: +((mix?.litros_cremados || 0) + litros).toFixed(2) }).eq('id', mixId);
     closeModal('modal-prod-overlay');
     showToast(`${litros}L cremados ✓`);
     await this.renderAll();
   },
 
   async _guardarComercializado(cremadoId, nombre, litros, fecha, notas) {
-    const { error } = await supabase.from('lotes_venta').insert({ cremado_id: cremadoId, receta_nombre: nombre, litros, litros_restantes: litros, fecha_comercializacion: fecha, notas });
+    const { error } = await sb.from('lotes_venta').insert({ cremado_id: cremadoId, receta_nombre: nombre, litros, litros_restantes: litros, fecha_comercializacion: fecha, notas });
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    const { data: cr } = await supabase.from('lotes_cremado').select('litros_comercializados').eq('id', cremadoId).single();
-    await supabase.from('lotes_cremado').update({ litros_comercializados: +((cr?.litros_comercializados || 0) + litros).toFixed(2) }).eq('id', cremadoId);
+    const { data: cr } = await sb.from('lotes_cremado').select('litros_comercializados').eq('id', cremadoId).single();
+    await sb.from('lotes_cremado').update({ litros_comercializados: +((cr?.litros_comercializados || 0) + litros).toFixed(2) }).eq('id', cremadoId);
     closeModal('modal-prod-overlay');
     showToast(`${litros}L comercializados ✓`);
     await this.renderAll();
   },
 
   async _guardarBaja(ventaId, litros, notas) {
-    const { data: lote } = await supabase.from('lotes_venta').select('litros_restantes').eq('id', ventaId).single();
+    const { data: lote } = await sb.from('lotes_venta').select('litros_restantes').eq('id', ventaId).single();
     const nuevos = Math.max(0, +((lote?.litros_restantes || 0) - litros).toFixed(2));
-    const { error } = await supabase.from('lotes_venta').update({ litros_restantes: nuevos, notas }).eq('id', ventaId);
+    const { error } = await sb.from('lotes_venta').update({ litros_restantes: nuevos, notas }).eq('id', ventaId);
     if (error) { showToast('Error: ' + error.message, 'error'); return; }
     closeModal('modal-prod-overlay');
     showToast(`Baja de ${litros}L registrada ✓`);
