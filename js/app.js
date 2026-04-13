@@ -7,7 +7,7 @@ const TITLES  = {
   conteo:       '📋 Conteo Semanal',
   compras:      '🛒 Lista de Compras',
   calculadora:  '🧮 Calculadora de Recetas',
-  produccion:   '🧊 Control de Producción',
+  produccion:   '🧊 Producción',
 };
 
 // ── Utilidades globales ───────────────────────────────────────────────────────

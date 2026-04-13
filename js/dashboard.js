@@ -5,7 +5,6 @@ const Dashboard = {
   async load() {
     this.renderGreeting();
     this.renderKPIs('–', '–', '–');
-    document.getElementById('alerts-list').innerHTML   = '<div class="empty-msg">Cargando…</div>';
     document.getElementById('dash-last-conteo-txt').textContent = '…';
     document.getElementById('dash-action-compras').textContent  = 'Lista de compras';
 
@@ -13,6 +12,7 @@ const Dashboard = {
       this.loadStock(),
       this.loadComprasPendientes(),
       this.loadLastConteo(),
+      this.loadProduccionKPIs(),
     ]);
   },
 
@@ -155,6 +155,51 @@ const Dashboard = {
       const txt = n > 0 ? `Lista de compras (${n})` : 'Lista de compras';
       document.getElementById('dash-action-compras').textContent = txt;
     } catch (e) { /* silencioso */ }
+  },
+
+  async loadProduccionKPIs() {
+    try {
+      const hoy  = new Date().toISOString().split('T')[0];
+      const hace7 = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+
+      const [{ data: mixes }, { data: cremados }, { data: vitrina }, { data: ventas }] = await Promise.all([
+        sb.from('lotes_mix').select('litros, litros_cremados'),
+        sb.from('lotes_cremado').select('litros, litros_comercializados, fecha_cremado').lt('fecha_cremado', hoy),
+        sb.from('lotes_venta').select('litros_restantes').gt('litros_restantes', 0),
+        sb.from('lotes_venta').select('litros, litros_restantes').gte('fecha_comercializacion', hace7),
+      ]);
+
+      // Mixes con litros pendientes
+      const nMixes = (mixes || []).filter(m => (m.litros - (m.litros_cremados||0)) > 0.001).length;
+
+      // Cremados listos para vender (fecha < hoy, con litros pendientes)
+      const nListos = (cremados || []).filter(c => (c.litros - (c.litros_comercializados||0)) > 0.001).length;
+
+      // Litros en comercialización
+      const lVitrina = (vitrina || []).reduce((s, v) => s + parseFloat(v.litros_restantes||0), 0).toFixed(1);
+
+      // Litros vendidos en 7 días
+      const lVendidos = (ventas || []).reduce((s, v) => s + parseFloat((v.litros||0) - (v.litros_restantes||0)), 0).toFixed(1);
+
+      document.getElementById('pkpi-mixes').textContent    = nMixes;
+      document.getElementById('pkpi-listos').textContent   = nListos;
+      document.getElementById('pkpi-vitrina').textContent  = lVitrina + 'L';
+      document.getElementById('pkpi-vendidos').textContent = lVendidos + 'L';
+
+      // Sabores en comercialización
+      const saboresCont = document.getElementById('prod-dash-sabores');
+      if (vitrina && vitrina.length) {
+        const { data: sab } = await sb.from('lotes_venta').select('receta_nombre, litros_restantes').gt('litros_restantes', 0).order('receta_nombre');
+        if (sab && sab.length) {
+          saboresCont.innerHTML = sab.map(s =>
+            `<div class="prod-dash-sabor"><span>${s.receta_nombre}</span><span class="prod-dash-litros">${parseFloat(s.litros_restantes).toFixed(1)}L</span></div>`
+          ).join('');
+        }
+      } else {
+        saboresCont.innerHTML = '<div style="font-size:0.8rem;color:#888;padding:4px 0">Sin helados en comercialización</div>';
+      }
+
+    } catch(e) { console.error('loadProduccionKPIs:', e); }
   },
 
   async loadLastConteo() {
