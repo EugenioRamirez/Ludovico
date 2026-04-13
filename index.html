@@ -84,6 +84,13 @@
           </svg>
           <span>Recetas</span>
         </button>
+        <button class="nav-item" data-screen="produccion">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 20h20"/><path d="M6 20V10l6-6 6 6v10"/>
+            <path d="M10 20v-5h4v5"/>
+          </svg>
+          <span>Producción</span>
+        </button>
       </div>
     </nav>
 
@@ -230,7 +237,13 @@
             </table>
           </div>
           <div class="calc-nota hidden" id="calc-nota"></div>
+          <button class="btn btn-green btn-full hidden" id="btn-preparar-mix">🧊 Preparar Mix</button>
         </div>
+      </section>
+
+      <!-- ── Producción ─────────────────────────── -->
+      <section id="screen-produccion" class="screen">
+        <!-- Renderizado dinámicamente por produccion.js -->
       </section>
 
       <!-- ── Lista de Compras ────────────────────── -->
@@ -418,6 +431,7 @@
   <script src="js/conteo.js"></script>
   <script src="js/compras.js"></script>
   <script src="js/calculadora.js"></script>
+  <script src="js/produccion.js"></script>
   <script src="js/app.js"></script>
 
 </body>
