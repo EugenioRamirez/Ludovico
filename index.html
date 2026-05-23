@@ -91,6 +91,15 @@
           </svg>
           <span>Producción</span>
         </button>
+        <button class="nav-item" data-screen="clientes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>Clientes</span>
+        </button>
       </div>
     </nav>
 
@@ -148,12 +157,22 @@
             <span class="dash-action-icon">🧮</span>
             <span>Calculadora</span>
           </button>
+          <button class="dash-action-btn" onclick="App.nav('produccion')">
+            <span class="dash-action-icon">🧊</span>
+            <span>Producción</span>
+          </button>
         </div>
 
-        <!-- Alertas de stock -->
-        <div class="card" id="card-alerts">
-          <h3 class="card-title">🚨 Requieren atención</h3>
-          <div id="alerts-list"><div class="empty-msg">Cargando…</div></div>
+        <!-- KPIs Producción -->
+        <div class="card" id="card-produccion-dash">
+          <h3 class="card-title">🧊 Producción</h3>
+          <div class="prod-kpi-grid" id="prod-kpi-grid">
+            <div class="prod-kpi"><div class="prod-kpi-val" id="pkpi-mixes">–</div><div class="prod-kpi-lbl">Mixes pendientes</div></div>
+            <div class="prod-kpi"><div class="prod-kpi-val" id="pkpi-listos">–</div><div class="prod-kpi-lbl">Listos para vender</div></div>
+            <div class="prod-kpi"><div class="prod-kpi-val" id="pkpi-vitrina">–</div><div class="prod-kpi-lbl">En comercialización</div></div>
+            <div class="prod-kpi"><div class="prod-kpi-val" id="pkpi-vendidos">–</div><div class="prod-kpi-lbl">Vendidos (7 días)</div></div>
+          </div>
+          <div id="prod-dash-sabores" style="margin-top:10px"></div>
         </div>
 
       </section>
@@ -244,6 +263,21 @@
       <!-- ── Producción ─────────────────────────── -->
       <section id="screen-produccion" class="screen">
         <!-- Renderizado dinámicamente por produccion.js -->
+      </section>
+
+      <!-- ── Clientes B2B ──────────────────────────── -->
+      <section id="screen-clientes" class="screen">
+        <div class="search-bar">
+          <input type="search" id="clientes-search" placeholder="🔍  Buscar cliente, NIF…" autocomplete="off" />
+        </div>
+        <div class="filter-tabs" id="clientes-filter-tabs">
+          <!-- generado por clientes.js -->
+        </div>
+        <div id="clientes-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+        <!-- FAB: solo Administrador -->
+        <button class="fab" id="fab-add-cliente" title="Añadir cliente B2B">＋</button>
       </section>
 
       <!-- ── Lista de Compras ────────────────────── -->
@@ -441,6 +475,95 @@
     </div>
   </div>
 
+  <!-- Modal: Añadir / Editar Cliente B2B -->
+  <div class="modal-overlay hidden" id="modal-cliente-overlay">
+    <div class="modal" id="modal-cliente">
+      <div class="modal-header">
+        <h3 id="modal-cliente-title">Nuevo Cliente B2B</h3>
+        <button class="modal-close" id="modal-cliente-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="cliente-id" />
+
+        <!-- Datos fiscales -->
+        <div class="modal-section-label">Datos fiscales</div>
+        <div class="form-row">
+          <label>Razón social *</label>
+          <input type="text" id="cliente-razon-social" placeholder="Ej: Restaurante Sol S.L." autocomplete="off" />
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>NIF / CIF *</label>
+            <input type="text" id="cliente-nif" placeholder="Ej: B12345678" autocomplete="off" />
+          </div>
+          <div>
+            <label>Nombre comercial</label>
+            <input type="text" id="cliente-nombre-comercial" placeholder="Ej: Restaurante Sol" autocomplete="off" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Dirección fiscal *</label>
+          <input type="text" id="cliente-dir-fiscal" placeholder="Calle, número, CP, ciudad" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Dirección de entrega</label>
+          <input type="text" id="cliente-dir-entrega" placeholder="Si difiere de la fiscal" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Email de facturación *</label>
+          <input type="email" id="cliente-email-fact" placeholder="facturacion@restaurante.com" autocomplete="off" />
+        </div>
+
+        <!-- Contacto -->
+        <div class="modal-section-label">Contacto</div>
+        <div class="form-row">
+          <label>Persona de contacto *</label>
+          <input type="text" id="cliente-contacto" placeholder="Nombre y apellidos" autocomplete="off" />
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Teléfono / WhatsApp *</label>
+            <input type="tel" id="cliente-telefono" placeholder="+34 600 000 000" autocomplete="off" />
+          </div>
+          <div>
+            <label>Canal preferente</label>
+            <select id="cliente-canal">
+              <option value="whatsapp">💬 WhatsApp</option>
+              <option value="email">📧 Email</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Email operativo para pedidos</label>
+          <input type="email" id="cliente-email-op" placeholder="pedidos@restaurante.com" autocomplete="off" />
+        </div>
+
+        <!-- Condiciones y notas -->
+        <div class="modal-section-label">Condiciones y notas</div>
+        <div class="form-row">
+          <label>Condiciones de pago</label>
+          <input type="text" id="cliente-condiciones" placeholder="Ej: 30 días, transferencia" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Notas de entrega</label>
+          <input type="text" id="cliente-notas-entrega" placeholder="Ej: Entregar antes de las 10h" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Referencia AEAT / Verifactu</label>
+          <input type="text" id="cliente-ref-aeat" placeholder="Opcional" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Observaciones internas</label>
+          <textarea id="cliente-observaciones" rows="3" placeholder="Solo visible internamente…" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-cliente">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-cliente">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast notification -->
   <div class="toast hidden" id="toast"></div>
 
@@ -461,6 +584,7 @@
   <script src="js/compras.js"></script>
   <script src="js/calculadora.js"></script>
   <script src="js/produccion.js"></script>
+  <script src="js/clientes.js"></script>
   <script src="js/app.js"></script>
 
 </body>
