@@ -1,6 +1,6 @@
 // ── app.js · Router y controlador principal ──────────────────────────────────
 
-const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion'];
+const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'clientes'];
 const TITLES  = {
   dashboard:    '🏠 Dashboard',
   inventario:   '📦 Inventario',
@@ -8,6 +8,7 @@ const TITLES  = {
   compras:      '🛒 Lista de Compras',
   calculadora:  '🧮 Calculadora de Recetas',
   produccion:   '🧊 Producción',
+  clientes:     '👥 Clientes B2B',
 };
 
 // ── Utilidades globales ───────────────────────────────────────────────────────
@@ -77,6 +78,7 @@ const App = {
       case 'compras':      Compras.load();      break;
       case 'calculadora':  Calculadora.load();  break;
       case 'produccion':   Produccion.load();   break;
+      case 'clientes':     Clientes.load();     break;
     }
 
     window.location.hash = screen;
