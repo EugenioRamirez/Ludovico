@@ -85,51 +85,91 @@ const Clientes = {
     }
 
     el.innerHTML = list.map(c => {
-      const canal = c.canal_comunicacion === 'whatsapp' ? '💬 WhatsApp' : '📧 Email';
-      const badge = c.activo
+      const nombre  = c.nombre_comercial || c.razon_social;
+      const canal   = c.canal_comunicacion === 'whatsapp' ? '💬 WhatsApp' : '📧 Email';
+      const estadoBadge = c.activo
         ? '<span class="badge badge-ok">Activo</span>'
         : '<span class="badge badge-crit">Inactivo</span>';
+
+      const acciones = esAdmin ? `
+        <div class="acord-actions">
+          <button class="btn btn-sm btn-outline btn-edit-cliente" data-id="${c.id}">✏️ Editar</button>
+          <button class="btn btn-sm btn-ghost btn-toggle-cliente" data-id="${c.id}" data-activo="${c.activo}">
+            ${c.activo ? '🔴 Desactivar' : '🟢 Activar'}
+          </button>
+        </div>` : '';
+
       return `
-        <div class="producto-item cliente-item" data-id="${c.id}">
-          <div class="producto-main">
-            <div class="producto-info">
-              <span class="producto-nombre">
-                ${c.nombre_comercial ? escHtml(c.nombre_comercial) : escHtml(c.razon_social)}
-              </span>
-              <span class="producto-cat">
-                ${escHtml(c.razon_social)}
-                ${c.nombre_comercial ? `· <span class="producto-prov">${escHtml(c.nif_cif)}</span>` : `· <span class="producto-prov">${escHtml(c.nif_cif)}</span>`}
-              </span>
+        <div class="acord-row" data-id="${c.id}">
+          <div class="acord-summary">
+            <div class="acord-main">
+              <span class="acord-nombre">${escHtml(nombre)}</span>
+              <div class="acord-meta">
+                <span class="acord-meta-txt">${escHtml(c.nif_cif)}</span>
+                <span class="acord-meta-txt">· ${escHtml(c.contacto_nombre)}</span>
+              </div>
             </div>
-            <div class="producto-stock-wrap">
-              ${badge}
+            <div class="acord-right">
+              ${estadoBadge}
+              <span class="acord-chevron">›</span>
             </div>
           </div>
-          <div class="cliente-meta">
-            <span>👤 ${escHtml(c.contacto_nombre)}</span>
-            <span>📞 ${escHtml(c.telefono)}</span>
-            <span>${canal}</span>
+          <div class="acord-detail">
+            <div class="acord-grid">
+              <div class="acord-field">
+                <span class="acord-field-lbl">Teléfono</span>
+                <span class="acord-field-val">${escHtml(c.telefono)}</span>
+              </div>
+              <div class="acord-field">
+                <span class="acord-field-lbl">Canal</span>
+                <span class="acord-field-val">${canal}</span>
+              </div>
+              <div class="acord-field acord-field-full">
+                <span class="acord-field-lbl">Dirección fiscal</span>
+                <span class="acord-field-val">${escHtml(c.direccion_fiscal)}</span>
+              </div>
+              <div class="acord-field acord-field-full">
+                <span class="acord-field-lbl">Email facturación</span>
+                <span class="acord-field-val">${escHtml(c.email_facturacion)}</span>
+              </div>
+              ${c.direccion_entrega ? `
+              <div class="acord-field acord-field-full">
+                <span class="acord-field-lbl">Dirección de entrega</span>
+                <span class="acord-field-val">${escHtml(c.direccion_entrega)}</span>
+              </div>` : ''}
+              ${c.condiciones_pago ? `
+              <div class="acord-field">
+                <span class="acord-field-lbl">Condiciones de pago</span>
+                <span class="acord-field-val">${escHtml(c.condiciones_pago)}</span>
+              </div>` : ''}
+              ${c.notas_entrega ? `
+              <div class="acord-field">
+                <span class="acord-field-lbl">Notas entrega</span>
+                <span class="acord-field-val">${escHtml(c.notas_entrega)}</span>
+              </div>` : ''}
+            </div>
+            ${acciones}
           </div>
-          ${esAdmin ? `
-          <div class="producto-actions">
-            <button class="btn btn-sm btn-outline btn-edit-cliente" data-id="${c.id}" title="Editar cliente">
-              ✏️ Editar
-            </button>
-            <button class="btn btn-sm btn-ghost btn-toggle-cliente" data-id="${c.id}" data-activo="${c.activo}" title="${c.activo ? 'Desactivar' : 'Activar'}">
-              ${c.activo ? '🔴 Desactivar' : '🟢 Activar'}
-            </button>
-          </div>
-          ` : ''}
         </div>
       `;
     }).join('');
 
-    // Bind acciones
+    // Toggle acordeón
+    el.querySelectorAll('.acord-summary').forEach(summary => {
+      summary.addEventListener('click', () => {
+        const row    = summary.closest('.acord-row');
+        const isOpen = row.classList.contains('open');
+        el.querySelectorAll('.acord-row.open').forEach(r => r.classList.remove('open'));
+        if (!isOpen) row.classList.add('open');
+      });
+    });
+
+    // Botones
     el.querySelectorAll('.btn-edit-cliente').forEach(btn => {
-      btn.addEventListener('click', () => this.openModal(btn.dataset.id));
+      btn.addEventListener('click', e => { e.stopPropagation(); this.openModal(btn.dataset.id); });
     });
     el.querySelectorAll('.btn-toggle-cliente').forEach(btn => {
-      btn.addEventListener('click', () => this.toggleActivo(btn.dataset.id, btn.dataset.activo === 'true'));
+      btn.addEventListener('click', e => { e.stopPropagation(); this.toggleActivo(btn.dataset.id, btn.dataset.activo === 'true'); });
     });
 
     document.getElementById('fab-add-cliente').style.display = esAdmin ? 'flex' : 'none';

@@ -67,7 +67,7 @@ const Sabores = {
     });
   },
 
-  // ── Render lista ─────────────────────────────────────────────────────────────
+  // ── Render lista (acordeón) ──────────────────────────────────────────────────
 
   CAT_LABELS: { estandar: 'Estándar', especial: 'Especial', premium: 'Premium' },
   CAT_COLORS: { estandar: 'badge-ok', especial: 'badge-pend', premium: 'badge-pedido' },
@@ -84,48 +84,79 @@ const Sabores = {
     }
 
     el.innerHTML = list.map(s => {
-      const catLabel  = this.CAT_LABELS[s.categoria] || s.categoria || '';
-      const catBadge  = this.CAT_COLORS[s.categoria]  || 'badge-ok';
+      const catLabel = this.CAT_LABELS[s.categoria] || '';
+      const catBadge = this.CAT_COLORS[s.categoria] || 'badge-ok';
+      const precio   = s.precio_litro ? `${parseFloat(s.precio_litro).toFixed(2)} €/L` : '–';
       const estadoBadge = s.activo
         ? '<span class="badge badge-ok">Activo</span>'
         : '<span class="badge badge-crit">Inactivo</span>';
-      const b2bBadge = s.visible_b2b
-        ? '<span class="badge badge-pedido">B2B ✓</span>'
-        : '<span class="badge" style="background:#eee;color:#999">B2B ✗</span>';
+
+      const acciones = esAdmin ? `
+        <div class="acord-actions">
+          <button class="btn btn-sm btn-outline btn-edit-sabor" data-id="${s.id}">✏️ Editar</button>
+          <button class="btn btn-sm btn-ghost btn-toggle-sabor" data-id="${s.id}" data-activo="${s.activo}">
+            ${s.activo ? '🔴 Desactivar' : '🟢 Activar'}
+          </button>
+        </div>` : '';
 
       return `
-        <div class="producto-item" data-id="${s.id}">
-          <div class="producto-main">
-            <div class="producto-info">
-              <span class="producto-nombre">${escHtml(s.nombre)}</span>
-              <span class="producto-cat">
+        <div class="acord-row" data-id="${s.id}">
+          <div class="acord-summary">
+            <div class="acord-main">
+              <span class="acord-nombre">${escHtml(s.nombre)}</span>
+              <div class="acord-meta">
                 ${catLabel ? `<span class="badge ${catBadge}" style="font-size:10px;padding:2px 7px">${catLabel}</span>` : ''}
-                ${s.precio_litro ? `· <span class="producto-prov">${parseFloat(s.precio_litro).toFixed(2)} €/L</span>` : ''}
-              </span>
+                <span class="acord-meta-txt">${precio}</span>
+              </div>
             </div>
-            <div class="producto-stock-wrap" style="gap:5px;flex-direction:column;align-items:flex-end">
+            <div class="acord-right">
               ${estadoBadge}
-              ${b2bBadge}
+              <span class="acord-chevron">›</span>
             </div>
           </div>
-          ${s.descripcion ? `<div class="cliente-meta" style="margin-top:4px">${escHtml(s.descripcion)}</div>` : ''}
-          ${esAdmin ? `
-          <div class="producto-actions">
-            <button class="btn btn-sm btn-outline btn-edit-sabor" data-id="${s.id}">✏️ Editar</button>
-            <button class="btn btn-sm btn-ghost btn-toggle-sabor" data-id="${s.id}" data-activo="${s.activo}">
-              ${s.activo ? '🔴 Desactivar' : '🟢 Activar'}
-            </button>
+          <div class="acord-detail">
+            <div class="acord-grid">
+              <div class="acord-field">
+                <span class="acord-field-lbl">Visible B2B</span>
+                <span class="acord-field-val">${s.visible_b2b ? '✓ Sí' : '✗ No'}</span>
+              </div>
+              <div class="acord-field">
+                <span class="acord-field-lbl">Orden</span>
+                <span class="acord-field-val">${s.orden_visualizacion ?? '–'}</span>
+              </div>
+              ${s.descripcion ? `
+              <div class="acord-field acord-field-full">
+                <span class="acord-field-lbl">Descripción</span>
+                <span class="acord-field-val">${escHtml(s.descripcion)}</span>
+              </div>` : ''}
+              ${s.observaciones ? `
+              <div class="acord-field acord-field-full">
+                <span class="acord-field-lbl">Observaciones internas</span>
+                <span class="acord-field-val">${escHtml(s.observaciones)}</span>
+              </div>` : ''}
+            </div>
+            ${acciones}
           </div>
-          ` : ''}
         </div>
       `;
     }).join('');
 
+    // Toggle acordeón
+    el.querySelectorAll('.acord-summary').forEach(summary => {
+      summary.addEventListener('click', () => {
+        const row = summary.closest('.acord-row');
+        const isOpen = row.classList.contains('open');
+        el.querySelectorAll('.acord-row.open').forEach(r => r.classList.remove('open'));
+        if (!isOpen) row.classList.add('open');
+      });
+    });
+
+    // Botones (stopPropagation para no cerrar el acordeón)
     el.querySelectorAll('.btn-edit-sabor').forEach(btn => {
-      btn.addEventListener('click', () => this.openModal(btn.dataset.id));
+      btn.addEventListener('click', e => { e.stopPropagation(); this.openModal(btn.dataset.id); });
     });
     el.querySelectorAll('.btn-toggle-sabor').forEach(btn => {
-      btn.addEventListener('click', () => this.toggleActivo(btn.dataset.id, btn.dataset.activo === 'true'));
+      btn.addEventListener('click', e => { e.stopPropagation(); this.toggleActivo(btn.dataset.id, btn.dataset.activo === 'true'); });
     });
 
     document.getElementById('fab-add-sabor').style.display = esAdmin ? 'flex' : 'none';
