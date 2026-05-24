@@ -183,6 +183,12 @@ const Pedidos = {
         ? `<button class="btn btn-sm btn-outline btn-edit-pedido" data-id="${p.id}">✏️ Editar</button>`
         : '';
 
+      // Eliminar: solo admin, cualquier estado
+      const puedeEliminar = esAdmin;
+      const btnEliminar = puedeEliminar
+        ? `<button class="btn btn-sm btn-ghost btn-del-pedido" data-id="${p.id}" style="color:var(--red)">🗑️ Eliminar</button>`
+        : '';
+
       return `
         <div class="acord-row" data-id="${p.id}">
           <div class="acord-summary">
@@ -222,7 +228,9 @@ const Pedidos = {
             ${botonesEstado}
             <div class="acord-actions">
               <button class="btn btn-sm btn-ghost btn-ver-pedido" data-id="${p.id}">🔍 Ver líneas</button>
+              <button class="btn btn-sm btn-ghost btn-print-albaran" data-id="${p.id}">🖨️ Albarán</button>
               ${btnEditar}
+              ${btnEliminar}
             </div>
           </div>
         </div>
@@ -250,6 +258,18 @@ const Pedidos = {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         this.cambiarEstado(btn.dataset.id, btn.dataset.estado);
+      });
+    });
+    el.querySelectorAll('.btn-del-pedido').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        this.eliminarPedido(btn.dataset.id);
+      });
+    });
+    el.querySelectorAll('.btn-print-albaran').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        this.printAlbaran(btn.dataset.id);
       });
     });
   },
@@ -286,7 +306,7 @@ const Pedidos = {
           <td>${escHtml(l.sabor_nombre)}${l.es_promocional ? ' 🎁' : ''}</td>
           <td style="text-align:right">${parseFloat(l.litros).toFixed(1)}</td>
           <td style="text-align:right">${parseFloat(l.precio_litro).toFixed(2)}</td>
-          <td style="text-align:right">${l.es_promocional ? '–' : parseFloat(l.subtotal).toFixed(2)}</td>
+          <td style="text-align:right">${parseFloat(l.subtotal).toFixed(2)}</td>
           <td style="color:var(--text-muted);font-size:11px">${escHtml(l.observaciones || '')}</td>
         </tr>
       `).join('');
@@ -382,15 +402,24 @@ const Pedidos = {
     const conds = clienteId ? this.condicionesDeCliente(clienteId) : [];
     sel.innerHTML = '<option value="">— Sabor —</option>';
     conds.forEach(c => {
-      sel.innerHTML += `<option value="${c.sabor_id}" data-condicion="${c.id}" data-precio="${c.precio_litro}">${escHtml(c.sabores_b2b?.nombre || '')}</option>`;
+      const precioPromo = (c.precio_promocional != null) ? c.precio_promocional : '';
+      sel.innerHTML += `<option value="${c.sabor_id}" data-condicion="${c.id}" data-precio="${c.precio_litro}" data-precio-promo="${precioPromo}">${escHtml(c.sabores_b2b?.nombre || '')}</option>`;
     });
-    // Auto-precio al elegir sabor
-    sel.onchange = () => {
-      const opt = sel.options[sel.selectedIndex];
-      if (opt.dataset.precio) {
+    // Auto-precio al elegir sabor (o al cambiar checkbox promo)
+    const actualizarPrecio = () => {
+      const opt   = sel.options[sel.selectedIndex];
+      const esProm = document.getElementById('linea-es-promo').checked;
+      if (!opt.value) return;
+      if (esProm && opt.dataset.precioPromo !== '') {
+        document.getElementById('linea-precio').value = parseFloat(opt.dataset.precioPromo).toFixed(2);
+      } else if (opt.dataset.precio) {
         document.getElementById('linea-precio').value = parseFloat(opt.dataset.precio).toFixed(2);
       }
     };
+    sel.onchange = actualizarPrecio;
+    // También cuando cambia el checkbox de promocional
+    const chkPromo = document.getElementById('linea-es-promo');
+    chkPromo.onchange = actualizarPrecio;
   },
 
   // ── Gestión de líneas en memoria ──────────────────────────────────────────────
@@ -406,10 +435,12 @@ const Pedidos = {
     if (isNaN(litros) || litros <= 0) { showToast('Introduce litros válidos', 'error'); return; }
     if (isNaN(precio) || precio < 0)  { showToast('Introduce un precio válido', 'error'); return; }
 
-    const opt         = sel.options[sel.selectedIndex];
+    const opt          = sel.options[sel.selectedIndex];
     const sabor_nombre = opt.text;
     const condicion_id = opt.dataset.condicion || null;
-    const subtotal     = esProm ? 0 : litros * precio;
+    // Si es promocional pero tiene precio propio (≠ 0), se cobra ese precio
+    // Solo es gratuita si el precio introducido es exactamente 0
+    const subtotal     = litros * precio;
 
     this.lineas.push({
       tempId: this.nextTempId++,
@@ -445,7 +476,7 @@ const Pedidos = {
           <td>${escHtml(l.sabor_nombre)}${l.es_promocional ? ' 🎁' : ''}</td>
           <td style="text-align:right">${l.litros.toFixed(1)}</td>
           <td style="text-align:right">${l.precio_litro.toFixed(2)}</td>
-          <td style="text-align:right">${l.es_promocional ? '–' : l.subtotal.toFixed(2)}</td>
+          <td style="text-align:right">${l.subtotal.toFixed(2)}</td>
           <td style="text-align:center">
             <button class="btn btn-sm btn-ghost btn-rm-linea" data-temp="${l.tempId}" style="color:var(--red)">✕</button>
           </td>
@@ -537,6 +568,217 @@ const Pedidos = {
       showToast('Error al guardar: ' + (e.message || e), 'error');
     } finally {
       btn.disabled = false; btn.textContent = 'Guardar pedido';
+    }
+  },
+
+  // ── Imprimir albarán ──────────────────────────────────────────────────────────
+
+  async printAlbaran(pedidoId) {
+    const pedido = this.lista.find(p => p.id === pedidoId);
+    if (!pedido) return;
+
+    showToast('Preparando albarán…', 'info', 1500);
+
+    try {
+      // Datos completos del cliente
+      const { data: cli } = await sb
+        .from('clientes_b2b')
+        .select('razon_social, nombre_comercial, nif_cif, direccion_fiscal, telefono, email_facturacion')
+        .eq('id', pedido.cliente_id)
+        .single();
+
+      // Líneas del pedido
+      const { data: lineas, error } = await sb
+        .from('pedidos_b2b_lineas')
+        .select('*')
+        .eq('pedido_id', pedidoId)
+        .order('created_at');
+      if (error) throw error;
+
+      const html = this._buildAlbaranHtml(pedido, cli || {}, lineas || []);
+      const win  = window.open('', '_blank', 'width=820,height=700');
+      if (!win) { showToast('Permite ventanas emergentes para imprimir', 'error', 4000); return; }
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { win.print(); }, 600);
+
+    } catch (e) {
+      console.error('printAlbaran:', e);
+      showToast('Error al generar albarán: ' + (e.message || e), 'error');
+    }
+  },
+
+  _buildAlbaranHtml(pedido, cli, lineas) {
+    const numAlbaran   = pedido.id.slice(0, 8).toUpperCase();
+    const clienteNombre = cli.nombre_comercial || cli.razon_social || '–';
+    const estado        = this.ESTADOS[pedido.estado] || { label: pedido.estado, icon: '' };
+
+    const filasLineas = lineas.map((l, i) => `
+      <tr>
+        <td style="text-align:center">${i + 1}</td>
+        <td>${escHtml(l.sabor_nombre)}${l.es_promocional ? ' <span style="font-size:10px;color:#1565a0;font-weight:700">[PROMO]</span>' : ''}</td>
+        <td style="text-align:right">${parseFloat(l.litros).toFixed(1)}</td>
+        <td style="text-align:right">${parseFloat(l.precio_litro).toFixed(2)}</td>
+        <td style="text-align:right">${parseFloat(l.subtotal).toFixed(2)}</td>
+        <td style="color:#888;font-size:11px">${escHtml(l.observaciones || '')}</td>
+      </tr>`).join('');
+
+    const totalLitros  = lineas.reduce((s, l) => s + parseFloat(l.litros), 0).toFixed(1);
+    const totalImporte = lineas.reduce((s, l) => s + parseFloat(l.subtotal), 0).toFixed(2);
+
+    const notasHtml = [
+      pedido.notas_entrega       ? `<p><strong>Notas entrega:</strong> ${escHtml(pedido.notas_entrega)}</p>` : '',
+      pedido.observaciones       ? `<p><strong>Observaciones:</strong> ${escHtml(pedido.observaciones)}</p>` : '',
+      pedido.referencia_cliente  ? `<p><strong>Ref. cliente:</strong> ${escHtml(pedido.referencia_cliente)}</p>` : '',
+      pedido.comentarios_logisticos ? `<p><strong>Logística:</strong> ${escHtml(pedido.comentarios_logisticos)}</p>` : '',
+    ].filter(Boolean).join('');
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Albarán ${numAlbaran} · Helados Ludovico</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #1a2a3a; background: #fff; padding: 28px 36px; }
+    /* CABECERA */
+    .hdr { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1565a0; padding-bottom: 14px; margin-bottom: 18px; }
+    .hdr-logo { font-size: 22px; font-weight: 900; color: #1565a0; letter-spacing: -0.5px; }
+    .hdr-logo span { color: #F5A623; }
+    .hdr-sub { font-size: 11px; color: #666; margin-top: 3px; }
+    .hdr-albaran { text-align: right; }
+    .hdr-albaran h1 { font-size: 18px; font-weight: 800; color: #1565a0; text-transform: uppercase; letter-spacing: 1px; }
+    .hdr-albaran .num { font-size: 13px; color: #555; margin-top: 3px; }
+    .hdr-albaran .estado { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; background: #e3f2fd; color: #1565a0; margin-top: 5px; }
+    /* INFO BICOLUMNA */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+    .info-box { border: 1px solid #dde4ee; border-radius: 8px; padding: 12px 14px; }
+    .info-box h2 { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #1565a0; font-weight: 800; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 8px; }
+    .info-box p { font-size: 12px; line-height: 1.7; color: #333; }
+    .info-box strong { color: #1a2a3a; }
+    /* TABLA */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 12px; }
+    thead th { background: #1565a0; color: #fff; padding: 8px 9px; text-align: left; font-size: 11px; }
+    tbody td { padding: 7px 9px; border-bottom: 1px solid #eee; vertical-align: top; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #f7fafd; }
+    tfoot td { padding: 9px; font-weight: 700; border-top: 2px solid #1565a0; background: #f0f4f8; font-size: 13px; }
+    /* NOTAS */
+    .notas { background: #fffde7; border-left: 4px solid #F5A623; padding: 10px 14px; border-radius: 4px; margin-bottom: 18px; font-size: 12px; line-height: 1.7; }
+    .notas p { margin-bottom: 3px; }
+    /* FIRMA */
+    .firma-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
+    .firma-box { border-top: 1.5px solid #1a2a3a; padding-top: 6px; }
+    .firma-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #888; }
+    .firma-espacio { height: 52px; }
+    /* PIE */
+    .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #aaa; border-top: 1px solid #eee; padding-top: 10px; }
+    @media print {
+      body { padding: 12px 20px; }
+      @page { margin: 1.2cm; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CABECERA -->
+  <div class="hdr">
+    <div>
+      <div class="hdr-logo">Helados <span>Ludovico</span></div>
+      <div class="hdr-sub">C/ Ejemplo 1 · 28001 Madrid · info@ludovico.es</div>
+    </div>
+    <div class="hdr-albaran">
+      <h1>Albarán de entrega</h1>
+      <div class="num">Ref. ALB-${numAlbaran}</div>
+      <div class="estado">${estado.icon} ${estado.label}</div>
+    </div>
+  </div>
+
+  <!-- INFO PEDIDO + CLIENTE -->
+  <div class="info-grid">
+    <div class="info-box">
+      <h2>Datos del pedido</h2>
+      <p><strong>Fecha recepción:</strong> ${fmtFecha(pedido.fecha_recepcion)}</p>
+      <p><strong>Fecha entrega:</strong> ${fmtFecha(pedido.fecha_entrega_prevista)}</p>
+      ${pedido.referencia_cliente ? `<p><strong>Ref. cliente:</strong> ${escHtml(pedido.referencia_cliente)}</p>` : ''}
+      <p><strong>Creado por:</strong> ${escHtml(pedido.creado_por || '–')}</p>
+    </div>
+    <div class="info-box">
+      <h2>Cliente</h2>
+      <p><strong>${escHtml(clienteNombre)}</strong></p>
+      ${cli.razon_social && cli.razon_social !== clienteNombre ? `<p>${escHtml(cli.razon_social)}</p>` : ''}
+      ${cli.nif_cif       ? `<p>NIF/CIF: ${escHtml(cli.nif_cif)}</p>` : ''}
+      ${cli.direccion_fiscal ? `<p>${escHtml(cli.direccion_fiscal)}</p>` : ''}
+      ${cli.telefono      ? `<p>Tel: ${escHtml(cli.telefono)}</p>` : ''}
+    </div>
+  </div>
+
+  <!-- LÍNEAS -->
+  <table>
+    <thead>
+      <tr>
+        <th style="width:32px;text-align:center">#</th>
+        <th>Sabor / Producto</th>
+        <th style="width:70px;text-align:right">Litros</th>
+        <th style="width:80px;text-align:right">€/litro</th>
+        <th style="width:90px;text-align:right">Subtotal €</th>
+        <th style="width:120px">Observaciones</th>
+      </tr>
+    </thead>
+    <tbody>${filasLineas}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" style="text-align:right">TOTAL</td>
+        <td style="text-align:right">${totalLitros} L</td>
+        <td></td>
+        <td style="text-align:right">${totalImporte} €</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- NOTAS -->
+  ${notasHtml ? `<div class="notas">${notasHtml}</div>` : ''}
+
+  <!-- FIRMA -->
+  <div class="firma-grid">
+    <div class="firma-box">
+      <div class="firma-espacio"></div>
+      <div class="firma-label">Firma y sello del cliente · Recibido conforme</div>
+    </div>
+    <div class="firma-box">
+      <div class="firma-espacio"></div>
+      <div class="firma-label">Firma del repartidor · Helados Ludovico</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Documento generado el ${new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' })} · Helados Ludovico
+  </div>
+
+</body>
+</html>`;
+  },
+
+  // ── Eliminar pedido ───────────────────────────────────────────────────────────
+
+  async eliminarPedido(pedidoId) {
+    const pedido  = this.lista.find(p => p.id === pedidoId);
+    const cliente = this.nombreCliente(pedido?.clientes_b2b);
+    const fecha   = fmtFecha(pedido?.fecha_entrega_prevista);
+
+    if (!confirm(`¿Eliminar el pedido de "${cliente}" (entrega: ${fecha})?\n\nSe borrarán también todas sus líneas. Esta acción no se puede deshacer.`)) return;
+
+    try {
+      // Las líneas se borran en cascada por la FK ON DELETE CASCADE
+      const { error } = await sb.from('pedidos_b2b').delete().eq('id', pedidoId);
+      if (error) throw error;
+      showToast('Pedido eliminado', 'success');
+      await this.load();
+    } catch (e) {
+      console.error('Pedidos.eliminarPedido:', e);
+      showToast('Error al eliminar: ' + (e.message || e), 'error');
     }
   },
 
