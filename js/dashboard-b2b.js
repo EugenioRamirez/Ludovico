@@ -97,12 +97,11 @@ const DashboardB2B = {
         sb.from('clientes_b2b').select('id', { count: 'exact', head: true })
           .eq('activo', true),
 
-        // KPI 7+8: litros y facturación mes actual
+        // KPI 7+8: litros y facturación mes actual (todas las proformas del período, sin excluir estado)
         sb.from('proformas_b2b')
           .select('total_litros, total_final')
           .eq('periodo_mes', mes)
-          .eq('periodo_anio', anio)
-          .neq('estado', 'borrador'),
+          .eq('periodo_anio', anio),
 
         // Panel pedidos operativos (últimos 30 activos, ordenados por fecha entrega)
         sb.from('pedidos_b2b')
