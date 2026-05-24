@@ -264,6 +264,23 @@
         <!-- Renderizado dinámicamente por produccion.js -->
       </section>
 
+      <!-- ── Condiciones Comerciales B2B ──────────── -->
+      <section id="screen-condiciones" class="screen">
+        <div class="search-bar">
+          <input type="search" id="condiciones-search" placeholder="🔍  Buscar cliente o sabor…" autocomplete="off" />
+        </div>
+        <div class="form-row" style="padding:0 0 8px">
+          <select id="condiciones-cliente-filter" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:white;color:var(--text);font-family:inherit;font-size:13px;">
+            <option value="">— Todos los clientes —</option>
+          </select>
+        </div>
+        <div class="filter-tabs" id="condiciones-filter-tabs"></div>
+        <div id="condiciones-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+        <button class="fab" id="fab-add-condicion" title="Nueva condición comercial">＋</button>
+      </section>
+
       <!-- ── Sabores B2B ───────────────────────────── -->
       <section id="screen-sabores" class="screen">
         <div class="search-bar">
@@ -486,6 +503,73 @@
     </div>
   </div>
 
+  <!-- Modal: Añadir / Editar Condición Comercial -->
+  <div class="modal-overlay hidden" id="modal-condicion-overlay">
+    <div class="modal" id="modal-condicion">
+      <div class="modal-header">
+        <h3 id="modal-condicion-title">Nueva Condición Comercial</h3>
+        <button class="modal-close" id="modal-condicion-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="condicion-id" />
+
+        <div class="modal-section-label">Cliente y sabor</div>
+        <div class="form-row">
+          <label>Cliente B2B *</label>
+          <select id="condicion-cliente">
+            <option value="">— Selecciona cliente —</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Sabor *</label>
+          <select id="condicion-sabor">
+            <option value="">— Selecciona sabor —</option>
+          </select>
+        </div>
+
+        <div class="modal-section-label">Precio y vigencia</div>
+        <div class="form-row two-col">
+          <div>
+            <label>Precio por litro (€) *</label>
+            <input type="number" id="condicion-precio" min="0" step="0.01" placeholder="0.00" />
+          </div>
+          <div>
+            <label>Fecha inicio *</label>
+            <input type="date" id="condicion-fecha-inicio" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Fecha fin (opcional)</label>
+          <input type="date" id="condicion-fecha-fin" />
+        </div>
+
+        <div class="modal-section-label">Promoción</div>
+        <div class="form-row" style="flex-direction:row;align-items:center;gap:12px">
+          <label style="margin:0;flex:1">Precio promocional</label>
+          <input type="checkbox" id="condicion-promo" style="width:20px;height:20px;cursor:pointer" />
+        </div>
+        <div class="form-row" id="condicion-promo-row" style="display:none">
+          <label>Precio promocional (€/L)</label>
+          <input type="number" id="condicion-precio-promo" min="0" step="0.01" placeholder="0.00" />
+        </div>
+
+        <div class="modal-section-label">Notas</div>
+        <div class="form-row">
+          <label>Notas comerciales</label>
+          <input type="text" id="condicion-notas" placeholder="Ej: Precio especial temporada" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Observaciones internas</label>
+          <textarea id="condicion-observaciones" rows="2" placeholder="Solo visible internamente…" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-condicion">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-condicion">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Añadir / Editar Sabor B2B -->
   <div class="modal-overlay hidden" id="modal-sabor-overlay">
     <div class="modal" id="modal-sabor">
@@ -654,6 +738,7 @@
   <script src="js/compras.js"></script>
   <script src="js/calculadora.js"></script>
   <script src="js/produccion.js"></script>
+  <script src="js/condiciones.js"></script>
   <script src="js/sabores.js"></script>
   <script src="js/clientes.js"></script>
   <script src="js/app.js"></script>
