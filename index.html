@@ -278,6 +278,24 @@
         <button class="fab" id="fab-add-pedido" title="Nuevo pedido">＋</button>
       </section>
 
+      <!-- ── Proformas B2B ────────────────────────── -->
+      <section id="screen-proformas" class="screen">
+        <div class="pf-filtros-top">
+          <select id="pf-filtro-cliente">
+            <option value="">— Todos los clientes —</option>
+          </select>
+          <select id="pf-filtro-mes">
+            <option value="">— Todos los meses —</option>
+          </select>
+          <select id="pf-filtro-anio"></select>
+        </div>
+        <div class="filter-tabs" id="pf-estado-tabs"></div>
+        <div id="proformas-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+        <button class="fab" id="fab-add-proforma" title="Nueva proforma">＋</button>
+      </section>
+
       <!-- ── Condiciones Comerciales B2B ──────────── -->
       <section id="screen-condiciones" class="screen">
         <div class="form-row" style="padding:0 0 8px">
@@ -513,6 +531,117 @@
   </div>
 
   <!-- Modal: Ver líneas de un pedido -->
+  <!-- Modal: Generar Proforma B2B -->
+  <div class="modal-overlay hidden" id="modal-pf-generar-overlay">
+    <div class="modal" id="modal-pf-generar">
+      <div class="modal-header">
+        <h3>Nueva proforma mensual</h3>
+        <button class="modal-close" id="modal-pf-gen-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section-label">Selección de periodo</div>
+        <div class="form-row">
+          <label>Cliente B2B *</label>
+          <select id="pf-gen-cliente">
+            <option value="">— Selecciona cliente —</option>
+          </select>
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Mes *</label>
+            <select id="pf-gen-mes"></select>
+          </div>
+          <div>
+            <label>Año *</label>
+            <input type="number" id="pf-gen-anio" min="2024" max="2030" step="1" />
+          </div>
+        </div>
+        <button class="btn btn-outline" id="btn-pf-gen-preview" style="width:100%;margin-top:4px">🔍 Previsualizar albaranes</button>
+
+        <div id="pf-gen-preview-wrap" class="hidden" style="margin-top:14px">
+          <div class="modal-section-label">Albaranes a consolidar</div>
+          <div id="pf-gen-preview"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-pf-gen-cancel">Cancelar</button>
+        <button class="btn btn-primary" id="btn-pf-gen-confirm" disabled>Generar proforma</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Detalle / Editar Proforma B2B -->
+  <div class="modal-overlay hidden" id="modal-pf-detalle-overlay">
+    <div class="modal modal-xl" id="modal-pf-detalle">
+      <div class="modal-header">
+        <div>
+          <h3 id="pf-det-titulo">Proforma</h3>
+          <div id="pf-det-estado" style="margin-top:4px"></div>
+        </div>
+        <button class="modal-close" id="modal-pf-det-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="pf-det-id" />
+
+        <!-- Líneas (renderizado dinámico) -->
+        <div id="pf-det-lineas-wrap"></div>
+
+        <!-- Añadir ajuste (visible solo en edición) -->
+        <div id="pf-add-ajuste-section" class="hidden" style="margin-top:16px">
+          <div class="modal-section-label">Añadir ajuste manual</div>
+          <div class="form-row two-col">
+            <div>
+              <label>Tipo de ajuste *</label>
+              <select id="ajuste-tipo">
+                <option value="">— Selecciona —</option>
+                <option value="descuento_comercial">Descuento comercial</option>
+                <option value="promocion">Promoción</option>
+                <option value="regularizacion">Regularización</option>
+                <option value="compensacion">Compensación</option>
+                <option value="incidencia">Incidencia</option>
+                <option value="ajuste_manual">Ajuste manual</option>
+              </select>
+            </div>
+            <div>
+              <label>Importe € (neg. = descuento) *</label>
+              <input type="number" id="ajuste-importe" step="0.01" placeholder="Ej: -25.00" />
+            </div>
+          </div>
+          <div class="form-row">
+            <label>Descripción *</label>
+            <input type="text" id="ajuste-descripcion" placeholder="Ej: Descuento por volumen acordado" autocomplete="off" />
+          </div>
+          <div class="form-row">
+            <label>Observaciones</label>
+            <input type="text" id="ajuste-obs" placeholder="Opcional" autocomplete="off" />
+          </div>
+          <button class="btn btn-outline btn-sm" id="btn-pf-add-ajuste" style="width:100%">＋ Añadir ajuste</button>
+        </div>
+
+        <!-- Notas -->
+        <div style="margin-top:16px">
+          <div class="modal-section-label">Notas y observaciones</div>
+          <div class="form-row">
+            <label>Notas al cliente</label>
+            <textarea id="pf-det-notas-cliente" rows="2" placeholder="Visible en el PDF enviado al cliente…" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+          </div>
+          <div class="form-row">
+            <label>Comentarios comerciales</label>
+            <textarea id="pf-det-comentarios" rows="2" placeholder="Acuerdos, condiciones especiales…" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+          </div>
+          <div class="form-row">
+            <label>Observaciones internas</label>
+            <textarea id="pf-det-obs-interna" rows="2" placeholder="Solo visible internamente…" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+          </div>
+          <button class="btn btn-primary hidden" id="btn-pf-det-guardar-notas" style="width:100%">💾 Guardar notas</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-pf-detalle-overlay')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay hidden" id="modal-detalle-pedido-overlay">
     <div class="modal" id="modal-detalle-pedido">
       <div class="modal-header">
@@ -884,6 +1013,7 @@
   <script src="js/sabores.js"></script>
   <script src="js/clientes.js"></script>
   <script src="js/pedidos.js"></script>
+  <script src="js/proformas.js"></script>
   <script src="js/app.js"></script>
 
 </body>

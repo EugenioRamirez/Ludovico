@@ -651,14 +651,21 @@ const Pedidos = {
 <html lang="es">
 <head>
   <meta charset="UTF-8"/>
-  <title>Albarán ${numAlbaran} · Helados Ludovico</title>
+  <title>Albarán ${numAlbaran} · Ludovico Helados</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; font-size: 13px; color: #1a2a3a; background: #fff; padding: 28px 36px; }
+    @page { size: A4; margin: 1.4cm 1.6cm; }
+    html, body { height: 100%; }
+    body {
+      font-family: Arial, sans-serif; font-size: 13px; color: #1a2a3a; background: #fff;
+      padding: 28px 36px;
+      display: flex; flex-direction: column; min-height: 100vh;
+    }
+    .contenido { flex: 1; }
     /* CABECERA */
     .hdr { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1565a0; padding-bottom: 14px; margin-bottom: 18px; }
-    .hdr-logo { display: flex; align-items: center; gap: 10px; }
-    .hdr-logo img { height: 48px; width: auto; }
+    .hdr-logo { display: flex; align-items: center; gap: 12px; }
+    .hdr-logo img { height: 52px; width: auto; }
     .hdr-logo-txt { font-size: 22px; font-weight: 900; color: #1565a0; letter-spacing: -0.5px; }
     .hdr-logo-txt span { color: #F5A623; }
     .hdr-sub { font-size: 11px; color: #666; margin-top: 3px; }
@@ -682,100 +689,116 @@ const Pedidos = {
     /* NOTAS */
     .notas { background: #fffde7; border-left: 4px solid #F5A623; padding: 10px 14px; border-radius: 4px; margin-bottom: 18px; font-size: 12px; line-height: 1.7; }
     .notas p { margin-bottom: 3px; }
-    /* FIRMA */
-    .firma-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
-    .firma-box { border-top: 1.5px solid #1a2a3a; padding-top: 6px; }
-    .firma-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #888; }
-    .firma-espacio { height: 52px; }
-    /* PIE */
-    .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #aaa; border-top: 1px solid #eee; padding-top: 10px; }
+    /* FIRMA — espacio generoso + líneas anchas */
+    .firma-wrap { margin-top: 56px; }
+    .firma-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .firma-box { border-top: 1.5px solid #1a2a3a; padding-top: 8px; }
+    .firma-label { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: #777; }
+    .firma-espacio { height: 72px; }
+    /* PIE — siempre al final */
+    .footer {
+      margin-top: 40px;
+      padding-top: 10px;
+      border-top: 1px solid #ddd;
+      text-align: center;
+      font-size: 10px;
+      color: #aaa;
+    }
     @media print {
-      body { padding: 12px 20px; }
-      @page { margin: 1.2cm; }
+      body { padding: 0; min-height: 0; }
     }
   </style>
 </head>
 <body>
 
-  <!-- CABECERA -->
-  <div class="hdr">
-    <div>
-      <div class="hdr-logo">
-        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Ludovico Helados"/>` : ''}
-        <div>
-          <div class="hdr-logo-txt">Ludovico <span>Helados</span></div>
-          <div class="hdr-sub">Ludovico Desarrollo Madrid · NIF B21689682</div>
-          <div class="hdr-sub">C/ Litio 1 3C · 28045 Madrid</div>
+  <div class="contenido">
+
+    <!-- CABECERA -->
+    <div class="hdr">
+      <div>
+        <div class="hdr-logo">
+          ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Ludovico Helados"/>` : ''}
+          <div>
+            <div class="hdr-logo-txt">Ludovico <span>Helados</span></div>
+            <div class="hdr-sub">Ludovico Desarrollo Madrid · NIF B21689682</div>
+            <div class="hdr-sub">C/ Litio 1 3C · 28045 Madrid</div>
+          </div>
+        </div>
+      </div>
+      <div class="hdr-albaran">
+        <h1>Albarán de entrega</h1>
+        <div class="num">Ref. ALB-${numAlbaran}</div>
+        <div class="estado">${estado.icon} ${estado.label}</div>
+      </div>
+    </div>
+
+    <!-- INFO PEDIDO + CLIENTE -->
+    <div class="info-grid">
+      <div class="info-box">
+        <h2>Datos del pedido</h2>
+        <p><strong>Fecha recepción:</strong> ${fmtFecha(pedido.fecha_recepcion)}</p>
+        <p><strong>Fecha entrega:</strong> ${fmtFecha(pedido.fecha_entrega_prevista)}</p>
+        ${pedido.referencia_cliente ? `<p><strong>Ref. cliente:</strong> ${escHtml(pedido.referencia_cliente)}</p>` : ''}
+        <p><strong>Creado por:</strong> ${escHtml(pedido.creado_por || '–')}</p>
+      </div>
+      <div class="info-box">
+        <h2>Cliente</h2>
+        <p><strong>${escHtml(clienteNombre)}</strong></p>
+        ${cli.razon_social && cli.razon_social !== clienteNombre ? `<p>${escHtml(cli.razon_social)}</p>` : ''}
+        ${cli.nif_cif         ? `<p>NIF/CIF: ${escHtml(cli.nif_cif)}</p>` : ''}
+        ${cli.direccion_fiscal ? `<p>${escHtml(cli.direccion_fiscal)}</p>` : ''}
+        ${cli.telefono         ? `<p>Tel: ${escHtml(cli.telefono)}</p>` : ''}
+      </div>
+    </div>
+
+    <!-- LÍNEAS -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32px;text-align:center">#</th>
+          <th>Sabor / Producto</th>
+          <th style="width:70px;text-align:right">Litros</th>
+          <th style="width:80px;text-align:right">€/litro</th>
+          <th style="width:90px;text-align:right">Subtotal €</th>
+          <th style="width:120px">Observaciones</th>
+        </tr>
+      </thead>
+      <tbody>${filasLineas}</tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2" style="text-align:right">TOTAL</td>
+          <td style="text-align:right">${totalLitros} L</td>
+          <td></td>
+          <td style="text-align:right">${totalImporte} €</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- NOTAS -->
+    ${notasHtml ? `<div class="notas">${notasHtml}</div>` : ''}
+
+    <!-- FIRMA -->
+    <div class="firma-wrap">
+      <div class="firma-grid">
+        <div class="firma-box">
+          <div class="firma-espacio"></div>
+          <div class="firma-label">Firma y sello del cliente · Recibido conforme</div>
+        </div>
+        <div class="firma-box">
+          <div class="firma-espacio"></div>
+          <div class="firma-label">Firma del repartidor · Ludovico Helados</div>
         </div>
       </div>
     </div>
-    <div class="hdr-albaran">
-      <h1>Albarán de entrega</h1>
-      <div class="num">Ref. ALB-${numAlbaran}</div>
-      <div class="estado">${estado.icon} ${estado.label}</div>
-    </div>
-  </div>
 
-  <!-- INFO PEDIDO + CLIENTE -->
-  <div class="info-grid">
-    <div class="info-box">
-      <h2>Datos del pedido</h2>
-      <p><strong>Fecha recepción:</strong> ${fmtFecha(pedido.fecha_recepcion)}</p>
-      <p><strong>Fecha entrega:</strong> ${fmtFecha(pedido.fecha_entrega_prevista)}</p>
-      ${pedido.referencia_cliente ? `<p><strong>Ref. cliente:</strong> ${escHtml(pedido.referencia_cliente)}</p>` : ''}
-      <p><strong>Creado por:</strong> ${escHtml(pedido.creado_por || '–')}</p>
-    </div>
-    <div class="info-box">
-      <h2>Cliente</h2>
-      <p><strong>${escHtml(clienteNombre)}</strong></p>
-      ${cli.razon_social && cli.razon_social !== clienteNombre ? `<p>${escHtml(cli.razon_social)}</p>` : ''}
-      ${cli.nif_cif       ? `<p>NIF/CIF: ${escHtml(cli.nif_cif)}</p>` : ''}
-      ${cli.direccion_fiscal ? `<p>${escHtml(cli.direccion_fiscal)}</p>` : ''}
-      ${cli.telefono      ? `<p>Tel: ${escHtml(cli.telefono)}</p>` : ''}
-    </div>
-  </div>
+  </div><!-- /contenido -->
 
-  <!-- LÍNEAS -->
-  <table>
-    <thead>
-      <tr>
-        <th style="width:32px;text-align:center">#</th>
-        <th>Sabor / Producto</th>
-        <th style="width:70px;text-align:right">Litros</th>
-        <th style="width:80px;text-align:right">€/litro</th>
-        <th style="width:90px;text-align:right">Subtotal €</th>
-        <th style="width:120px">Observaciones</th>
-      </tr>
-    </thead>
-    <tbody>${filasLineas}</tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2" style="text-align:right">TOTAL</td>
-        <td style="text-align:right">${totalLitros} L</td>
-        <td></td>
-        <td style="text-align:right">${totalImporte} €</td>
-        <td></td>
-      </tr>
-    </tfoot>
-  </table>
-
-  <!-- NOTAS -->
-  ${notasHtml ? `<div class="notas">${notasHtml}</div>` : ''}
-
-  <!-- FIRMA -->
-  <div class="firma-grid">
-    <div class="firma-box">
-      <div class="firma-espacio"></div>
-      <div class="firma-label">Firma y sello del cliente · Recibido conforme</div>
-    </div>
-    <div class="firma-box">
-      <div class="firma-espacio"></div>
-      <div class="firma-label">Firma del repartidor · Helados Ludovico</div>
-    </div>
-  </div>
-
+  <!-- PIE AL FONDO -->
   <div class="footer">
-    Ludovico Desarrollo Madrid · NIF B21689682 · C/ Litio 1 3C, 28045 Madrid &nbsp;|&nbsp; Documento generado el ${new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' })}
+    Ludovico Desarrollo Madrid · NIF B21689682 · C/ Litio 1 3C, 28045 Madrid
+    &nbsp;·&nbsp;
+    Documento generado el ${new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' })}
   </div>
 
 </body>
