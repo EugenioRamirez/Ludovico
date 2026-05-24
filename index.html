@@ -55,25 +55,12 @@
           </svg>
           <span>Dashboard</span>
         </button>
-        <button class="nav-item" data-screen="inventario">
+        <button class="nav-item" data-group="operaciones">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
             <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
           </svg>
-          <span>Inventario</span>
-        </button>
-        <button class="nav-item" data-screen="conteo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-          </svg>
-          <span>Conteo</span>
-        </button>
-        <button class="nav-item" data-screen="compras">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
-          </svg>
-          <span>Compras</span>
+          <span>Operaciones</span>
         </button>
         <button class="nav-item" data-screen="calculadora">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -84,6 +71,13 @@
           </svg>
           <span>Recetas</span>
         </button>
+        <button class="nav-item" data-screen="compras">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>
+          </svg>
+          <span>Compras</span>
+        </button>
         <button class="nav-item" data-screen="produccion">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M2 20h20"/><path d="M6 20V10l6-6 6 6v10"/>
@@ -91,16 +85,21 @@
           </svg>
           <span>Producción</span>
         </button>
-        <button class="nav-item" data-screen="clientes">
+        <button class="nav-item" data-group="b2b">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
           </svg>
-          <span>Clientes</span>
+          <span>B2B</span>
         </button>
       </div>
+    </nav>
+
+    <!-- Sub-navegación (aparece al entrar en un grupo) -->
+    <nav class="sub-nav hidden" id="sub-nav">
+      <div class="sub-nav-items" id="sub-nav-items"></div>
     </nav>
 
     <!-- Contenido principal -->
@@ -263,6 +262,18 @@
       <!-- ── Producción ─────────────────────────── -->
       <section id="screen-produccion" class="screen">
         <!-- Renderizado dinámicamente por produccion.js -->
+      </section>
+
+      <!-- ── Sabores B2B ───────────────────────────── -->
+      <section id="screen-sabores" class="screen">
+        <div class="search-bar">
+          <input type="search" id="sabores-search" placeholder="🔍  Buscar sabor…" autocomplete="off" />
+        </div>
+        <div class="filter-tabs" id="sabores-filter-tabs"></div>
+        <div id="sabores-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+        <button class="fab" id="fab-add-sabor" title="Añadir sabor">＋</button>
       </section>
 
       <!-- ── Clientes B2B ──────────────────────────── -->
@@ -475,6 +486,65 @@
     </div>
   </div>
 
+  <!-- Modal: Añadir / Editar Sabor B2B -->
+  <div class="modal-overlay hidden" id="modal-sabor-overlay">
+    <div class="modal" id="modal-sabor">
+      <div class="modal-header">
+        <h3 id="modal-sabor-title">Nuevo Sabor</h3>
+        <button class="modal-close" id="modal-sabor-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="sabor-id" />
+
+        <div class="modal-section-label">Datos del sabor</div>
+        <div class="form-row">
+          <label>Nombre del sabor *</label>
+          <input type="text" id="sabor-nombre" placeholder="Ej: Stracciatella" autocomplete="off" />
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Categoría comercial</label>
+            <select id="sabor-categoria">
+              <option value="estandar">Estándar</option>
+              <option value="especial">Especial</option>
+              <option value="premium">Premium</option>
+            </select>
+          </div>
+          <div>
+            <label>Precio estándar (€/L)</label>
+            <input type="number" id="sabor-precio" min="0" step="0.01" placeholder="0.00" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Orden de visualización</label>
+          <input type="number" id="sabor-orden" min="0" step="1" placeholder="0" />
+        </div>
+        <div class="form-row">
+          <label>Descripción interna</label>
+          <input type="text" id="sabor-descripcion" placeholder="Opcional" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Observaciones internas</label>
+          <textarea id="sabor-observaciones" rows="2" placeholder="Solo visible internamente…" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+        </div>
+
+        <div class="modal-section-label">Estado y visibilidad</div>
+        <div class="form-row" style="flex-direction:row;align-items:center;gap:12px">
+          <label style="margin:0;flex:1">Visible en B2B</label>
+          <input type="checkbox" id="sabor-visible-b2b" style="width:20px;height:20px;cursor:pointer" />
+        </div>
+        <div class="form-row" style="flex-direction:row;align-items:center;gap:12px">
+          <label style="margin:0;flex:1">Activo</label>
+          <input type="checkbox" id="sabor-activo" style="width:20px;height:20px;cursor:pointer" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-sabor">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-sabor">Guardar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal: Añadir / Editar Cliente B2B -->
   <div class="modal-overlay hidden" id="modal-cliente-overlay">
     <div class="modal" id="modal-cliente">
@@ -584,6 +654,7 @@
   <script src="js/compras.js"></script>
   <script src="js/calculadora.js"></script>
   <script src="js/produccion.js"></script>
+  <script src="js/sabores.js"></script>
   <script src="js/clientes.js"></script>
   <script src="js/app.js"></script>
 

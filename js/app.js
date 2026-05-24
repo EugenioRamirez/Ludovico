@@ -1,6 +1,6 @@
 // ── app.js · Router y controlador principal ──────────────────────────────────
 
-const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'clientes'];
+const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'clientes', 'sabores'];
 const TITLES  = {
   dashboard:    '🏠 Dashboard',
   inventario:   '📦 Inventario',
@@ -9,6 +9,29 @@ const TITLES  = {
   calculadora:  '🧮 Calculadora de Recetas',
   produccion:   '🧊 Producción',
   clientes:     '👥 Clientes B2B',
+  sabores:      '🍨 Sabores B2B',
+};
+
+// ── Grupos de navegación ──────────────────────────────────────────────────────
+const GROUPS = {
+  operaciones: {
+    default: 'inventario',
+    screens: ['inventario', 'conteo'],
+    labels:  { inventario: '📦 Inventario', conteo: '📋 Conteo' },
+  },
+  b2b: {
+    default: 'clientes',
+    screens: ['clientes', 'sabores'],
+    labels:  { clientes: '👥 Clientes', sabores: '🍨 Sabores' },
+  },
+};
+
+// Mapa pantalla → grupo al que pertenece
+const SCREEN_GROUP = {
+  inventario: 'operaciones',
+  conteo:     'operaciones',
+  clientes:   'b2b',
+  sabores:    'b2b',
 };
 
 // ── Utilidades globales ───────────────────────────────────────────────────────
@@ -55,39 +78,84 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 const App = {
   currentScreen: 'dashboard',
+  currentGroup:  null,
 
   nav(screen) {
     if (!SCREENS.includes(screen)) return;
 
-    // Hide all screens
-    document.querySelectorAll('#main-content .screen').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    const group = SCREEN_GROUP[screen] || null;
 
-    // Show target
+    // Ocultar todas las pantallas
+    document.querySelectorAll('#main-content .screen').forEach(s => s.classList.remove('active'));
+
+    // Actualizar nav principal
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    if (group) {
+      document.querySelector(`.nav-item[data-group="${group}"]`)?.classList.add('active');
+    } else {
+      document.querySelector(`.nav-item[data-screen="${screen}"]`)?.classList.add('active');
+    }
+
+    // Mostrar pantalla objetivo
     document.getElementById(`screen-${screen}`).classList.add('active');
-    document.querySelector(`.nav-item[data-screen="${screen}"]`).classList.add('active');
     document.getElementById('topbar-title').textContent = TITLES[screen];
 
     this.currentScreen = screen;
+    this.currentGroup  = group;
 
-    // Load screen data
+    // Sub-nav
+    this._renderSubNav(group, screen);
+
+    // Cargar datos
     switch (screen) {
       case 'dashboard':   Dashboard.load();   break;
       case 'inventario':  Inventario.load();  break;
       case 'conteo':      Conteo.load();      break;
-      case 'compras':      Compras.load();      break;
-      case 'calculadora':  Calculadora.load();  break;
-      case 'produccion':   Produccion.load();   break;
-      case 'clientes':     Clientes.load();     break;
+      case 'compras':     Compras.load();     break;
+      case 'calculadora': Calculadora.load(); break;
+      case 'produccion':  Produccion.load();  break;
+      case 'clientes':    Clientes.load();    break;
+      case 'sabores':     Sabores.load();     break;
     }
 
     window.location.hash = screen;
   },
 
-  init() {
-    // Bind bottom nav
-    document.querySelectorAll('.nav-item').forEach(btn => {
+  navGroup(group) {
+    if (!GROUPS[group]) return;
+    this.nav(GROUPS[group].default);
+  },
+
+  _renderSubNav(group, activeScreen) {
+    const subNav   = document.getElementById('sub-nav');
+    const subItems = document.getElementById('sub-nav-items');
+
+    if (!group || !GROUPS[group]) {
+      subNav.classList.add('hidden');
+      return;
+    }
+
+    const g = GROUPS[group];
+    subItems.innerHTML = g.screens.map(s =>
+      `<button class="sub-nav-item ${s === activeScreen ? 'active' : ''}" data-screen="${s}">
+        ${g.labels[s]}
+      </button>`
+    ).join('');
+
+    subItems.querySelectorAll('.sub-nav-item').forEach(btn => {
       btn.addEventListener('click', () => this.nav(btn.dataset.screen));
+    });
+
+    subNav.classList.remove('hidden');
+  },
+
+  init() {
+    // Bind nav principal
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.group)  this.navGroup(btn.dataset.group);
+        else if (btn.dataset.screen) this.nav(btn.dataset.screen);
+      });
     });
 
     // Hash navigation
@@ -96,7 +164,7 @@ const App = {
       if (SCREENS.includes(hash)) this.nav(hash);
     });
 
-    // Initial screen from hash or default
+    // Pantalla inicial
     const hash = window.location.hash.replace('#', '');
     this.nav(SCREENS.includes(hash) ? hash : 'dashboard');
   }
