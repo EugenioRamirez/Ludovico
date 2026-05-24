@@ -580,6 +580,19 @@ const Pedidos = {
     showToast('Preparando albarán…', 'info', 1500);
 
     try {
+      // Logo como base64 para que funcione en ventana nueva
+      let logoDataUrl = '';
+      try {
+        const resp = await fetch('assets/logo.png');
+        const blob = await resp.blob();
+        logoDataUrl = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload  = e => resolve(e.target.result);
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(blob);
+        });
+      } catch (_) { /* sin logo si falla */ }
+
       // Datos completos del cliente
       const { data: cli } = await sb
         .from('clientes_b2b')
@@ -595,7 +608,7 @@ const Pedidos = {
         .order('created_at');
       if (error) throw error;
 
-      const html = this._buildAlbaranHtml(pedido, cli || {}, lineas || []);
+      const html = this._buildAlbaranHtml(pedido, cli || {}, lineas || [], logoDataUrl);
       const win  = window.open('', '_blank', 'width=820,height=700');
       if (!win) { showToast('Permite ventanas emergentes para imprimir', 'error', 4000); return; }
       win.document.write(html);
@@ -609,7 +622,7 @@ const Pedidos = {
     }
   },
 
-  _buildAlbaranHtml(pedido, cli, lineas) {
+  _buildAlbaranHtml(pedido, cli, lineas, logoDataUrl = '') {
     const numAlbaran   = pedido.id.slice(0, 8).toUpperCase();
     const clienteNombre = cli.nombre_comercial || cli.razon_social || '–';
     const estado        = this.ESTADOS[pedido.estado] || { label: pedido.estado, icon: '' };
@@ -644,8 +657,10 @@ const Pedidos = {
     body { font-family: Arial, sans-serif; font-size: 13px; color: #1a2a3a; background: #fff; padding: 28px 36px; }
     /* CABECERA */
     .hdr { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1565a0; padding-bottom: 14px; margin-bottom: 18px; }
-    .hdr-logo { font-size: 22px; font-weight: 900; color: #1565a0; letter-spacing: -0.5px; }
-    .hdr-logo span { color: #F5A623; }
+    .hdr-logo { display: flex; align-items: center; gap: 10px; }
+    .hdr-logo img { height: 48px; width: auto; }
+    .hdr-logo-txt { font-size: 22px; font-weight: 900; color: #1565a0; letter-spacing: -0.5px; }
+    .hdr-logo-txt span { color: #F5A623; }
     .hdr-sub { font-size: 11px; color: #666; margin-top: 3px; }
     .hdr-albaran { text-align: right; }
     .hdr-albaran h1 { font-size: 18px; font-weight: 800; color: #1565a0; text-transform: uppercase; letter-spacing: 1px; }
@@ -685,8 +700,14 @@ const Pedidos = {
   <!-- CABECERA -->
   <div class="hdr">
     <div>
-      <div class="hdr-logo">Helados <span>Ludovico</span></div>
-      <div class="hdr-sub">C/ Ejemplo 1 · 28001 Madrid · info@ludovico.es</div>
+      <div class="hdr-logo">
+        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Ludovico Helados"/>` : ''}
+        <div>
+          <div class="hdr-logo-txt">Ludovico <span>Helados</span></div>
+          <div class="hdr-sub">Ludovico Desarrollo Madrid · NIF B21689682</div>
+          <div class="hdr-sub">C/ Litio 1 3C · 28045 Madrid</div>
+        </div>
+      </div>
     </div>
     <div class="hdr-albaran">
       <h1>Albarán de entrega</h1>
@@ -754,7 +775,7 @@ const Pedidos = {
   </div>
 
   <div class="footer">
-    Documento generado el ${new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' })} · Helados Ludovico
+    Ludovico Desarrollo Madrid · NIF B21689682 · C/ Litio 1 3C, 28045 Madrid &nbsp;|&nbsp; Documento generado el ${new Date().toLocaleDateString('es-ES', { day:'2-digit', month:'long', year:'numeric' })}
   </div>
 
 </body>
