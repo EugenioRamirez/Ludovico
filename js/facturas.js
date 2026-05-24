@@ -26,7 +26,7 @@ const Facturas = {
   },
 
   async loadFacturas() {
-    let q = supabase
+    let q = sb
       .from('facturas_b2b')
       .select(`
         id,
@@ -45,7 +45,7 @@ const Facturas = {
           subtotal,
           total_ajustes,
           total_final,
-          clientes_b2b ( id, nombre, nif )
+          clientes_b2b ( id, nombre_comercial, razon_social, nif_cif )
         )
       `)
       .order('fecha_factura', { ascending: false });
@@ -56,9 +56,9 @@ const Facturas = {
   },
 
   async loadClientes() {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from('clientes_b2b')
-      .select('id, nombre')
+      .select('id, nombre_comercial, razon_social')
       .order('nombre');
     if (error) throw error;
     this.clientes = data || [];
@@ -72,7 +72,7 @@ const Facturas = {
     if (selCli) {
       const val = selCli.value;
       selCli.innerHTML = '<option value="">Todos los clientes</option>' +
-        this.clientes.map(c => `<option value="${c.id}">${escHtml(c.nombre)}</option>`).join('');
+        this.clientes.map(c => `<option value="${c.id}">${escHtml(c.nombre_comercial || c.razon_social)}</option>`).join('');
       if (val) selCli.value = val;
     }
 
@@ -151,7 +151,7 @@ const Facturas = {
               : ''}
           </div>
           <div class="acord-header-right">
-            <span class="fact-cliente">${escHtml(cli?.nombre || '–')}</span>
+            <span class="fact-cliente">${escHtml(cli?.nombre_comercial || cli?.razon_social || '–')}</span>
             <span class="fact-periodo">Período: ${mes}</span>
             <span class="fact-total">${parseFloat(pf?.total_final || 0).toFixed(2)} €</span>
             <button class="btn-icon" title="Ver detalle" data-acord="${f.id}">🔍</button>
@@ -228,8 +228,8 @@ const Facturas = {
         <div class="fact-det-col">
           <div class="fact-det-section">
             <div class="fact-det-title">Trazabilidad</div>
-            <div class="fact-det-row"><span>Cliente</span><strong>${escHtml(cli?.nombre || '–')}</strong></div>
-            ${cli?.nif ? `<div class="fact-det-row"><span>NIF</span><strong>${escHtml(cli.nif)}</strong></div>` : ''}
+            <div class="fact-det-row"><span>Cliente</span><strong>${escHtml(cli?.nombre_comercial || cli?.razon_social || '–')}</strong></div>
+            ${cli?.nif_cif ? `<div class="fact-det-row"><span>NIF</span><strong>${escHtml(cli.nif_cif)}</strong></div>` : ''}
             <div class="fact-det-row"><span>Proforma</span>
               <strong>
                 ${pf ? `${this._nombreMes(pf.periodo_mes)} ${pf.periodo_anio}` : '–'}

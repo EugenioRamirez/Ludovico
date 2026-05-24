@@ -1,6 +1,6 @@
 // ── app.js · Router y controlador principal ──────────────────────────────────
 
-const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'clientes', 'sabores', 'condiciones', 'pedidos', 'proformas', 'facturas'];
+const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'db2b', 'clientes', 'sabores', 'condiciones', 'pedidos', 'proformas', 'facturas'];
 const TITLES  = {
   dashboard:    '🏠 Dashboard',
   inventario:   '📦 Inventario',
@@ -8,6 +8,7 @@ const TITLES  = {
   compras:      '🛒 Lista de Compras',
   calculadora:  '🧮 Calculadora de Recetas',
   produccion:   '🧊 Producción',
+  db2b:         '📊 Dashboard B2B',
   clientes:     '👥 Clientes B2B',
   sabores:      '🍨 Sabores B2B',
   condiciones:  '💶 Condiciones Comerciales',
@@ -24,9 +25,9 @@ const GROUPS = {
     labels:  { inventario: '📦 Inventario', conteo: '📋 Conteo' },
   },
   b2b: {
-    default: 'clientes',
-    screens: ['clientes', 'sabores', 'condiciones', 'pedidos', 'proformas', 'facturas'],
-    labels:  { clientes: '👥 Clientes', sabores: '🍨 Sabores', condiciones: '💶 Tarifas', pedidos: '📋 Pedidos', proformas: '🧾 Proformas', facturas: '📑 Facturas' },
+    default: 'db2b',
+    screens: ['db2b', 'clientes', 'sabores', 'condiciones', 'pedidos', 'proformas', 'facturas'],
+    labels:  { db2b: '📊 Resumen', clientes: '👥 Clientes', sabores: '🍨 Sabores', condiciones: '💶 Tarifas', pedidos: '📋 Pedidos', proformas: '🧾 Proformas', facturas: '📑 Facturas' },
   },
 };
 
@@ -34,6 +35,7 @@ const GROUPS = {
 const SCREEN_GROUP = {
   inventario:  'operaciones',
   conteo:      'operaciones',
+  db2b:        'b2b',
   clientes:    'b2b',
   sabores:     'b2b',
   condiciones: 'b2b',
@@ -91,6 +93,9 @@ const App = {
   nav(screen) {
     if (!SCREENS.includes(screen)) return;
 
+    // Detener timers de pantalla anterior
+    if (this.currentScreen === 'db2b' && screen !== 'db2b') DashboardB2B.unload();
+
     const group = SCREEN_GROUP[screen] || null;
 
     // Ocultar todas las pantallas
@@ -125,6 +130,7 @@ const App = {
       case 'clientes':    Clientes.load();    break;
       case 'sabores':     Sabores.load();     break;
       case 'condiciones': Condiciones.load(); break;
+      case 'db2b':        DashboardB2B.load(); break;
       case 'pedidos':     Pedidos.load();     break;
       case 'proformas':   Proformas.load();   break;
       case 'facturas':    Facturas.load();    break;
