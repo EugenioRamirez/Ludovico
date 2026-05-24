@@ -705,7 +705,8 @@ const Pedidos = {
       color: #aaa;
     }
     @media print {
-      body { padding: 0; min-height: 0; }
+      body { padding: 0; min-height: 297mm; }
+      @page { size: A4; margin: 1.4cm 1.6cm; }
     }
   </style>
 </head>

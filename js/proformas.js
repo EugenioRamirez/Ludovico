@@ -911,7 +911,9 @@ const Proformas = {
     const litrosPromo  = lineasAlb.filter(l => l.es_promocional).reduce((s, l) => s + parseFloat(l.litros || 0), 0);
     const subtotal     = lineasAlb.reduce((s, l) => s + parseFloat(l.subtotal_linea || 0), 0);
     const totalAjustes = lineasAjuste.reduce((s, l) => s + parseFloat(l.importe || 0), 0);
-    const totalFinal   = subtotal + totalAjustes;
+    const baseImponible = subtotal + totalAjustes;
+    const cuotaIVA     = baseImponible * 0.10;
+    const totalFinal   = baseImponible + cuotaIVA;
 
     const notasHtml = [
       pf.notas_cliente           ? `<p><strong>Notas al cliente:</strong> ${escHtml(pf.notas_cliente)}</p>` : '',
@@ -956,11 +958,15 @@ const Proformas = {
     .totales-box { background: #f0f4f8; border-radius: 8px; padding: 10px 14px; margin-top: 10px; }
     .tot-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 11px; border-bottom: 1px solid #e0e7f0; }
     .tot-row:last-child { border-bottom: none; }
-    .tot-final { border-top: 2px solid #1565a0; margin-top: 5px; padding-top: 7px; font-size: 14px; font-weight: 800; border-bottom: none !important; }
+    .tot-separator { border-top: 2px solid #1565a0; margin-top: 4px; padding-top: 7px; font-size: 12px; }
+    .tot-final { border-top: 1px solid #b0c4d8; margin-top: 2px; padding-top: 7px; font-size: 14px; font-weight: 800; border-bottom: none !important; }
     .notas-box { background: #fffde7; border-left: 4px solid #F5A623; padding: 8px 12px; margin-top: 10px; border-radius: 4px; font-size: 11px; line-height: 1.7; }
     .aviso { margin-top: 14px; font-size: 10px; color: #888; font-style: italic; text-align: center; padding: 8px; border: 1px dashed #ccc; border-radius: 4px; }
     .footer { margin-top: 32px; padding-top: 8px; border-top: 1px solid #ddd; text-align: center; font-size: 10px; color: #aaa; }
-    @media print { body { padding: 0; min-height: 0; } }
+    @media print {
+      body { padding: 0; min-height: 297mm; }
+      @page { size: A4; margin: 1.4cm 1.6cm; }
+    }
   </style>
 </head>
 <body>
@@ -1046,7 +1052,9 @@ const Proformas = {
     ${litrosPromo > 0 ? `<div class="tot-row"><span>Litros promocionales 🎁</span><strong>${litrosPromo.toFixed(1)} L</strong></div>` : ''}
     <div class="tot-row"><span>Subtotal albaranes</span><strong>${subtotal.toFixed(2)} €</strong></div>
     ${totalAjustes !== 0 ? `<div class="tot-row"><span>Total ajustes</span><strong style="color:${totalAjustes < 0 ? '#c62828' : '#2e7d32'}">${totalAjustes >= 0 ? '+' : ''}${totalAjustes.toFixed(2)} €</strong></div>` : ''}
-    <div class="tot-row tot-final"><span>TOTAL PROFORMA</span><strong>${totalFinal.toFixed(2)} €</strong></div>
+    <div class="tot-row tot-separator"><span><strong>Base imponible</strong></span><strong>${baseImponible.toFixed(2)} €</strong></div>
+    <div class="tot-row"><span>IVA 10%</span><strong>${cuotaIVA.toFixed(2)} €</strong></div>
+    <div class="tot-row tot-final"><span>TOTAL PROFORMA (IVA incl.)</span><strong>${totalFinal.toFixed(2)} €</strong></div>
   </div>
 
   ${notasHtml ? `<div class="notas-box">${notasHtml}</div>` : ''}
