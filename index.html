@@ -296,6 +296,42 @@
         <button class="fab" id="fab-add-proforma" title="Nueva proforma">＋</button>
       </section>
 
+      <!-- ── Facturas B2B ─────────────────────────── -->
+      <section id="screen-facturas" class="screen">
+        <div class="pf-filtros-top">
+          <select id="fact-filtro-cliente">
+            <option value="">Todos los clientes</option>
+          </select>
+          <select id="fact-filtro-anio">
+            <option value="">Todos los años</option>
+          </select>
+          <select id="fact-filtro-mes">
+            <option value="">Todos los meses</option>
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+        </div>
+        <div class="fact-search-row">
+          <input type="search" id="fact-filtro-numero"
+                 placeholder="🔍  Buscar nº factura o ref. Verifactu…"
+                 autocomplete="off" />
+          <span id="fact-count" class="fact-count-badge"></span>
+        </div>
+        <div id="facturas-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+      </section>
+
       <!-- ── Condiciones Comerciales B2B ──────────── -->
       <section id="screen-condiciones" class="screen">
         <div class="form-row" style="padding:0 0 8px">
@@ -638,6 +674,78 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modal-pf-detalle-overlay')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Registrar Factura (B2B-BILL-001) -->
+  <div class="modal-overlay hidden" id="modal-pf-facturar-overlay">
+    <div class="modal" id="modal-pf-facturar">
+      <div class="modal-header">
+        <div>
+          <h3>🧾 Registrar Factura Emitida</h3>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:2px">La factura fue emitida en Verifactu. Registra aquí los datos para trazabilidad.</p>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-pf-facturar-overlay')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="fact-proforma-id" />
+
+        <!-- Resumen proforma -->
+        <div class="fact-modal-resumen">
+          <div class="fact-modal-resumen-row">
+            <span>Cliente</span>
+            <strong id="fact-modal-cliente">–</strong>
+          </div>
+          <div class="fact-modal-resumen-row">
+            <span>Período</span>
+            <strong id="fact-modal-periodo">–</strong>
+          </div>
+          <div class="fact-modal-resumen-row fact-modal-resumen-total">
+            <span>Total proforma (IVA incl.)</span>
+            <strong id="fact-modal-total">–</strong>
+          </div>
+        </div>
+
+        <!-- Campos obligatorios -->
+        <div class="form-row two-col">
+          <div>
+            <label>Número de factura *</label>
+            <input type="text" id="fact-num-factura"
+                   placeholder="Ej: FAC-2026-001"
+                   autocomplete="off" />
+          </div>
+          <div>
+            <label>Fecha de factura *</label>
+            <input type="date" id="fact-fecha-factura" />
+          </div>
+        </div>
+
+        <!-- Campos opcionales -->
+        <div class="form-row">
+          <label>Referencia Verifactu</label>
+          <input type="text" id="fact-ref-verifactu"
+                 placeholder="Código o referencia del registro en Verifactu (opcional)"
+                 autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Observaciones internas</label>
+          <textarea id="fact-obs-factura" rows="2"
+                    placeholder="Notas internas sobre esta factura…"
+                    style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+        </div>
+
+        <!-- Error -->
+        <p id="fact-error" style="color:var(--red);font-size:13px;margin-top:4px;min-height:18px;"></p>
+
+        <!-- Aviso bloqueo -->
+        <div class="fact-modal-aviso">
+          ⚠️ Al confirmar, la proforma quedará <strong>bloqueada</strong> y sus albaranes pasarán a estado <strong>facturado</strong>. Esta acción no se puede deshacer.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-pf-facturar-overlay')">Cancelar</button>
+        <button class="btn btn-primary" onclick="Proformas.confirmarFactura()">✅ Confirmar y registrar</button>
       </div>
     </div>
   </div>
@@ -1014,6 +1122,7 @@
   <script src="js/clientes.js"></script>
   <script src="js/pedidos.js"></script>
   <script src="js/proformas.js"></script>
+  <script src="js/facturas.js"></script>
   <script src="js/app.js"></script>
 
 </body>

@@ -1,6 +1,6 @@
 // ── app.js · Router y controlador principal ──────────────────────────────────
 
-const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'clientes', 'sabores', 'condiciones', 'pedidos', 'proformas'];
+const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'clientes', 'sabores', 'condiciones', 'pedidos', 'proformas', 'facturas'];
 const TITLES  = {
   dashboard:    '🏠 Dashboard',
   inventario:   '📦 Inventario',
@@ -13,6 +13,7 @@ const TITLES  = {
   condiciones:  '💶 Condiciones Comerciales',
   pedidos:      '📋 Pedidos B2B',
   proformas:    '🧾 Proformas B2B',
+  facturas:     '📑 Facturas B2B',
 };
 
 // ── Grupos de navegación ──────────────────────────────────────────────────────
@@ -24,8 +25,8 @@ const GROUPS = {
   },
   b2b: {
     default: 'clientes',
-    screens: ['clientes', 'sabores', 'condiciones', 'pedidos', 'proformas'],
-    labels:  { clientes: '👥 Clientes', sabores: '🍨 Sabores', condiciones: '💶 Tarifas', pedidos: '📋 Pedidos', proformas: '🧾 Proformas' },
+    screens: ['clientes', 'sabores', 'condiciones', 'pedidos', 'proformas', 'facturas'],
+    labels:  { clientes: '👥 Clientes', sabores: '🍨 Sabores', condiciones: '💶 Tarifas', pedidos: '📋 Pedidos', proformas: '🧾 Proformas', facturas: '📑 Facturas' },
   },
 };
 
@@ -38,6 +39,7 @@ const SCREEN_GROUP = {
   condiciones: 'b2b',
   pedidos:     'b2b',
   proformas:   'b2b',
+  facturas:    'b2b',
 };
 
 // ── Utilidades globales ───────────────────────────────────────────────────────
@@ -125,6 +127,7 @@ const App = {
       case 'condiciones': Condiciones.load(); break;
       case 'pedidos':     Pedidos.load();     break;
       case 'proformas':   Proformas.load();   break;
+      case 'facturas':    Facturas.load();    break;
     }
 
     window.location.hash = screen;

@@ -182,6 +182,10 @@ const Proformas = {
         ? `<button class="btn btn-sm btn-ghost btn-pf-eliminar" data-id="${pf.id}" style="color:var(--red)">🗑️ Eliminar</button>`
         : '';
 
+      const btnFacturar = esAdmin && pf.estado === 'aprobada'
+        ? `<button class="btn btn-sm btn-primary btn-pf-facturar" data-id="${pf.id}">🧾 Registrar Factura</button>`
+        : '';
+
       return `
         <div class="acord-row" data-id="${pf.id}">
           <div class="acord-summary">
@@ -222,6 +226,7 @@ const Proformas = {
               <button class="btn btn-sm btn-ghost btn-pf-ver" data-id="${pf.id}">🔍 Ver detalle</button>
               <button class="btn btn-sm btn-ghost btn-pf-pdf" data-id="${pf.id}">🖨️ PDF</button>
               ${btnEditar}
+              ${btnFacturar}
               ${btnEliminar}
             </div>
           </div>
@@ -253,6 +258,9 @@ const Proformas = {
     });
     el.querySelectorAll('.btn-pf-eliminar').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); this.eliminarProforma(btn.dataset.id); });
+    });
+    el.querySelectorAll('.btn-pf-facturar').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); this.abrirModalFacturar(btn.dataset.id); });
     });
   },
 
@@ -798,6 +806,115 @@ const Proformas = {
     }
   },
 
+  // ── Registrar Factura (B2B-BILL-001) ──────────────────────────────────────────
+
+  abrirModalFacturar(proformaId) {
+    const pf = this.lista.find(p => p.id === proformaId);
+    if (!pf) return;
+
+    const cliente  = this.nombreCliente(pf.clientes_b2b);
+    const periodo  = this.periodoLabel(pf.periodo_mes, pf.periodo_anio);
+    const baseImp  = parseFloat(pf.subtotal || 0) + parseFloat(pf.total_ajustes || 0);
+    const cuotaIVA = baseImp * 0.10;
+    const total    = baseImp + cuotaIVA;
+
+    // Rellenar resumen en el modal
+    document.getElementById('fact-modal-cliente').textContent  = cliente;
+    document.getElementById('fact-modal-periodo').textContent  = periodo;
+    document.getElementById('fact-modal-total').textContent    = `${total.toFixed(2)} €`;
+
+    // Limpiar campos
+    document.getElementById('fact-num-factura').value        = '';
+    document.getElementById('fact-fecha-factura').value      = new Date().toISOString().split('T')[0];
+    document.getElementById('fact-ref-verifactu').value      = '';
+    document.getElementById('fact-obs-factura').value        = '';
+    document.getElementById('fact-error').textContent        = '';
+
+    // Guardar referencia
+    document.getElementById('fact-proforma-id').value = proformaId;
+
+    openModal('modal-pf-facturar-overlay');
+  },
+
+  async confirmarFactura() {
+    const proformaId = document.getElementById('fact-proforma-id').value;
+    const numero     = document.getElementById('fact-num-factura').value.trim();
+    const fecha      = document.getElementById('fact-fecha-factura').value;
+    const refVf      = document.getElementById('fact-ref-verifactu').value.trim() || null;
+    const obs        = document.getElementById('fact-obs-factura').value.trim() || null;
+    const errEl      = document.getElementById('fact-error');
+    errEl.textContent = '';
+
+    if (!numero) { errEl.textContent = 'El número de factura es obligatorio.'; return; }
+    if (!fecha)  { errEl.textContent = 'La fecha de factura es obligatoria.'; return; }
+
+    const empleada = Estado.getEmpleada();
+
+    try {
+      // Verificar unicidad del número de factura
+      const { data: existe } = await sb
+        .from('facturas_b2b')
+        .select('id')
+        .eq('numero_factura', numero)
+        .maybeSingle();
+
+      if (existe) {
+        errEl.textContent = `El número de factura "${numero}" ya existe. Usa un número único.`;
+        return;
+      }
+
+      // Insertar factura
+      const { error: errIns } = await sb.from('facturas_b2b').insert({
+        proforma_id:           proformaId,
+        numero_factura:        numero,
+        fecha_factura:         fecha,
+        referencia_verifactu:  refVf,
+        observaciones_internas: obs,
+        usuario_facturacion:   empleada,
+      });
+      if (errIns) throw errIns;
+
+      // Cambiar estado proforma → facturada (y bloquear albaranes)
+      await this._facturarProformaInterna(proformaId, empleada);
+
+      closeModal('modal-pf-facturar-overlay');
+      showToast(`Factura ${numero} registrada ✓`, 'success', 3500);
+      await this.load();
+
+      // Refrescar también el historial si está cargado
+      if (typeof Facturas !== 'undefined' && App.currentScreen === 'facturas') {
+        Facturas.load();
+      }
+
+    } catch (e) {
+      console.error('confirmarFactura:', e);
+      errEl.textContent = 'Error: ' + (e.message || JSON.stringify(e));
+    }
+  },
+
+  async _facturarProformaInterna(proformaId, empleada) {
+    // Cambiar estado proforma
+    const { error } = await sb.from('proformas_b2b')
+      .update({ estado: 'facturada', modificado_por: empleada })
+      .eq('id', proformaId);
+    if (error) throw error;
+
+    // Bloquear pedidos vinculados → estado facturado
+    const { data: pfLineas } = await sb
+      .from('proformas_b2b_lineas')
+      .select('pedido_id')
+      .eq('proforma_id', proformaId)
+      .eq('tipo', 'albaran')
+      .not('pedido_id', 'is', null);
+
+    const ids = [...new Set((pfLineas || []).map(l => l.pedido_id).filter(Boolean))];
+    if (ids.length) {
+      await sb.from('pedidos_b2b')
+        .update({ estado: 'facturado', modificado_por: empleada })
+        .in('id', ids);
+    }
+  },
+
   // ── Eliminar proforma ─────────────────────────────────────────────────────────
 
   async eliminarProforma(proformaId) {
@@ -891,7 +1008,7 @@ const Proformas = {
       <tr>
         <td style="text-align:center;color:#888;font-size:10px">${i + 1}</td>
         <td style="font-size:10px;color:#888">ALB-${l.num_albaran || '–'}</td>
-        <td style="font-size:11px">${fmtFecha(l.fecha_albaran)}</td>
+        <td style="font-size:11px;white-space:nowrap">${fmtFecha(l.fecha_albaran)}</td>
         <td>${escHtml(l.sabor_nombre || '–')}${l.es_promocional ? ' <span class="promo-tag">PROMO</span>' : ''}</td>
         <td style="text-align:right">${parseFloat(l.litros || 0).toFixed(1)}</td>
         <td style="text-align:right">${parseFloat(l.precio_litro || 0).toFixed(2)}</td>
@@ -1014,7 +1131,7 @@ const Proformas = {
       <tr>
         <th style="width:24px;text-align:center">#</th>
         <th style="width:68px">Albarán</th>
-        <th style="width:70px">Fecha</th>
+        <th style="width:88px">Fecha</th>
         <th>Sabor / Producto</th>
         <th style="width:50px;text-align:right">Litros</th>
         <th style="width:56px;text-align:right">€/L</th>
