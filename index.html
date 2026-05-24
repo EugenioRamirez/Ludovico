@@ -264,21 +264,30 @@
         <!-- Renderizado dinámicamente por produccion.js -->
       </section>
 
-      <!-- ── Condiciones Comerciales B2B ──────────── -->
-      <section id="screen-condiciones" class="screen">
-        <div class="search-bar">
-          <input type="search" id="condiciones-search" placeholder="🔍  Buscar cliente o sabor…" autocomplete="off" />
-        </div>
-        <div class="form-row" style="padding:0 0 8px">
-          <select id="condiciones-cliente-filter" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:white;color:var(--text);font-family:inherit;font-size:13px;">
+      <!-- ── Pedidos B2B ────────────────────────────── -->
+      <section id="screen-pedidos" class="screen">
+        <div class="form-row" style="padding:0 0 6px">
+          <select id="pedidos-cliente-filter" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:white;color:var(--text);font-family:inherit;font-size:13px;">
             <option value="">— Todos los clientes —</option>
           </select>
         </div>
-        <div class="filter-tabs" id="condiciones-filter-tabs"></div>
-        <div id="condiciones-list">
+        <div class="filter-tabs" id="pedidos-estado-tabs"></div>
+        <div id="pedidos-list">
           <div class="spinner-wrap"><div class="spinner"></div></div>
         </div>
-        <button class="fab" id="fab-add-condicion" title="Nueva condición comercial">＋</button>
+        <button class="fab" id="fab-add-pedido" title="Nuevo pedido">＋</button>
+      </section>
+
+      <!-- ── Condiciones Comerciales B2B ──────────── -->
+      <section id="screen-condiciones" class="screen">
+        <div class="form-row" style="padding:0 0 8px">
+          <select id="condiciones-cliente-filter" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:white;color:var(--text);font-family:inherit;font-size:13px;">
+            <option value="">— Selecciona un cliente —</option>
+          </select>
+        </div>
+        <div class="filter-tabs" id="condiciones-filter-tabs"></div>
+        <div id="condiciones-list"></div>
+        <button class="fab hidden" id="fab-add-condicion" title="Nueva condición comercial">＋</button>
       </section>
 
       <!-- ── Sabores B2B ───────────────────────────── -->
@@ -499,6 +508,139 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" id="btn-cancel-compra">Cancelar</button>
         <button class="btn btn-primary" id="btn-save-compra">Añadir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ver líneas de un pedido -->
+  <div class="modal-overlay hidden" id="modal-detalle-pedido-overlay">
+    <div class="modal" id="modal-detalle-pedido">
+      <div class="modal-header">
+        <h3 id="detalle-pedido-titulo">Detalle del pedido</h3>
+        <button class="modal-close" id="modal-detalle-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="overflow-x:auto">
+          <table class="pedido-lineas-table">
+            <thead>
+              <tr><th>Sabor</th><th>Litros</th><th>€/L</th><th>Subtotal</th><th>Nota</th></tr>
+            </thead>
+            <tbody id="detalle-lineas-tbody"></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="text-align:right;font-weight:700" id="detalle-total-litros">–</td>
+                <td></td>
+                <td style="font-weight:700" id="detalle-total-importe">–</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-detalle-pedido-overlay')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Crear / Editar Pedido B2B -->
+  <div class="modal-overlay hidden" id="modal-pedido-overlay">
+    <div class="modal" id="modal-pedido">
+      <div class="modal-header">
+        <h3 id="modal-pedido-title">Nuevo Pedido</h3>
+        <button class="modal-close" id="modal-pedido-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="pedido-id" />
+
+        <div class="modal-section-label">Cabecera</div>
+        <div class="form-row">
+          <label>Cliente B2B *</label>
+          <select id="pedido-cliente">
+            <option value="">— Selecciona cliente —</option>
+          </select>
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Fecha recepción *</label>
+            <input type="date" id="pedido-fecha-recepcion" />
+          </div>
+          <div>
+            <label>Fecha entrega *</label>
+            <input type="date" id="pedido-fecha-entrega" />
+          </div>
+        </div>
+        <div class="form-row two-col">
+          <div>
+            <label>Estado</label>
+            <select id="pedido-estado">
+              <option value="pendiente">⏳ Pendiente</option>
+              <option value="confirmado">✅ Confirmado</option>
+              <option value="preparando">🧊 Preparando</option>
+              <option value="entregado">📦 Entregado</option>
+              <option value="incidencia">⚠️ Incidencia</option>
+              <option value="cancelado">❌ Cancelado</option>
+              <option value="facturado">🧾 Facturado</option>
+            </select>
+          </div>
+          <div>
+            <label>Ref. cliente</label>
+            <input type="text" id="pedido-ref-cliente" placeholder="Opcional" autocomplete="off" />
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Notas de entrega</label>
+          <input type="text" id="pedido-notas-entrega" placeholder="Opcional" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Comentarios logísticos</label>
+          <input type="text" id="pedido-comentarios" placeholder="Opcional" autocomplete="off" />
+        </div>
+        <div class="form-row">
+          <label>Observaciones internas</label>
+          <input type="text" id="pedido-observaciones" placeholder="Opcional" autocomplete="off" />
+        </div>
+
+        <div class="modal-section-label">Líneas del pedido</div>
+        <div style="overflow-x:auto;margin-bottom:10px">
+          <table class="pedido-lineas-table">
+            <thead>
+              <tr><th>Sabor</th><th>Litros</th><th>€/L</th><th>Subtotal</th><th></th></tr>
+            </thead>
+            <tbody id="modal-lineas-tbody"></tbody>
+            <tfoot>
+              <tr>
+                <td style="font-weight:700">Total</td>
+                <td style="text-align:right;font-weight:700" id="modal-total-litros">0 L</td>
+                <td></td>
+                <td style="text-align:right;font-weight:700" id="modal-total-importe">0.00 €</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Mini-formulario añadir línea -->
+        <div class="add-linea-form">
+          <div class="add-linea-row">
+            <select id="linea-sabor" style="flex:2">
+              <option value="">— Sabor —</option>
+            </select>
+            <input type="number" id="linea-litros" min="0.1" step="0.1" placeholder="L" style="flex:1;min-width:60px" />
+            <input type="number" id="linea-precio" min="0" step="0.01" placeholder="€/L" style="flex:1;min-width:60px" />
+          </div>
+          <div class="add-linea-row" style="margin-top:6px">
+            <input type="text" id="linea-obs" placeholder="Nota (opcional)" style="flex:1" autocomplete="off" />
+            <label style="display:flex;align-items:center;gap:5px;font-size:12px;white-space:nowrap">
+              <input type="checkbox" id="linea-es-promo" />🎁 Promo
+            </label>
+            <button class="btn btn-primary btn-sm" id="btn-add-linea">＋ Añadir</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btn-cancel-pedido">Cancelar</button>
+        <button class="btn btn-primary" id="btn-save-pedido">Guardar pedido</button>
       </div>
     </div>
   </div>
@@ -741,6 +883,7 @@
   <script src="js/condiciones.js"></script>
   <script src="js/sabores.js"></script>
   <script src="js/clientes.js"></script>
+  <script src="js/pedidos.js"></script>
   <script src="js/app.js"></script>
 
 </body>

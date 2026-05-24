@@ -1,12 +1,11 @@
 // ── condiciones.js · Condiciones Comerciales B2B ──────────────────────────────
 
 const Condiciones = {
-  lista:     [],    // condiciones cargadas
-  clientes:  [],    // para los selectores
-  sabores:   [],    // para los selectores
-  filtro:    'activa',   // 'activa' | 'inactiva' | 'all'
-  filtroCliente: '',     // UUID del cliente o '' para todos
-  searchQ:   '',
+  lista:         [],    // condiciones cargadas
+  clientes:      [],    // para los selectores
+  sabores:       [],    // para los selectores
+  filtro:        'activa',   // 'activa' | 'inactiva' | 'all'
+  filtroCliente: '',         // UUID del cliente seleccionado
 
   // ── Carga ────────────────────────────────────────────────────────────────────
 
@@ -77,18 +76,9 @@ const Condiciones = {
   // ── Filtrado ─────────────────────────────────────────────────────────────────
 
   filtered() {
-    let list = this.lista;
+    let list = this.lista.filter(c => c.cliente_id === this.filtroCliente);
     if (this.filtro === 'activa')   list = list.filter(c => c.activa);
     if (this.filtro === 'inactiva') list = list.filter(c => !c.activa);
-    if (this.filtroCliente)         list = list.filter(c => c.cliente_id === this.filtroCliente);
-    if (this.searchQ) {
-      const q = this.searchQ.toLowerCase();
-      list = list.filter(c =>
-        (c.clientes_b2b?.razon_social  || '').toLowerCase().includes(q) ||
-        (c.clientes_b2b?.nombre_comercial || '').toLowerCase().includes(q) ||
-        (c.sabores_b2b?.nombre         || '').toLowerCase().includes(q)
-      );
-    }
     return list;
   },
 
@@ -96,7 +86,7 @@ const Condiciones = {
 
   renderClienteFilter() {
     const sel = document.getElementById('condiciones-cliente-filter');
-    sel.innerHTML = '<option value="">— Todos los clientes —</option>';
+    sel.innerHTML = '<option value="">— Selecciona un cliente —</option>';
     this.clientes.forEach(c => {
       const label = c.nombre_comercial || c.razon_social;
       sel.innerHTML += `<option value="${c.id}">${escHtml(label)}</option>`;
@@ -104,6 +94,7 @@ const Condiciones = {
     sel.value = this.filtroCliente;
     sel.onchange = () => {
       this.filtroCliente = sel.value;
+      this.renderFilterTabs();
       this.renderList();
     };
   },
@@ -112,6 +103,7 @@ const Condiciones = {
 
   renderFilterTabs() {
     const tabs = document.getElementById('condiciones-filter-tabs');
+    if (!this.filtroCliente) { tabs.innerHTML = ''; return; }
     const opciones = [
       { val: 'activa',   label: 'Activas' },
       { val: 'inactiva', label: 'Inactivas' },
@@ -140,9 +132,18 @@ const Condiciones = {
     const el      = document.getElementById('condiciones-list');
     const esAdmin = Estado.getEmpleada() === 'Administrador';
 
+    const fab = document.getElementById('fab-add-condicion');
+
+    if (!this.filtroCliente) {
+      el.innerHTML = '<div class="empty-msg">Selecciona un cliente para ver sus tarifas</div>';
+      fab.classList.add('hidden');
+      return;
+    }
+
+    fab.classList.toggle('hidden', !esAdmin);
+
     if (!list.length) {
-      el.innerHTML = '<div class="empty-msg">No hay condiciones comerciales</div>';
-      document.getElementById('fab-add-condicion').style.display = esAdmin ? 'flex' : 'none';
+      el.innerHTML = '<div class="empty-msg">No hay tarifas para este cliente</div>';
       return;
     }
 
@@ -233,7 +234,6 @@ const Condiciones = {
       btn.addEventListener('click', e => { e.stopPropagation(); this.toggleActiva(btn.dataset.id, btn.dataset.activa === 'true'); });
     });
 
-    document.getElementById('fab-add-condicion').style.display = esAdmin ? 'flex' : 'none';
   },
 
   // ── Toggle activa ────────────────────────────────────────────────────────────
@@ -399,12 +399,6 @@ const Condiciones = {
   // ── Bind UI ──────────────────────────────────────────────────────────────────
 
   bindUI() {
-    const search = document.getElementById('condiciones-search');
-    search.addEventListener('input', () => {
-      this.searchQ = search.value.trim();
-      this.renderList();
-    });
-
     document.getElementById('fab-add-condicion').onclick          = () => this.openModal(null);
     document.getElementById('modal-condicion-close').onclick      = () => closeModal('modal-condicion-overlay');
     document.getElementById('btn-cancel-condicion').onclick       = () => closeModal('modal-condicion-overlay');

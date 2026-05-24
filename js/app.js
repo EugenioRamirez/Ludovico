@@ -1,6 +1,6 @@
 // ── app.js · Router y controlador principal ──────────────────────────────────
 
-const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'clientes', 'sabores', 'condiciones'];
+const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'clientes', 'sabores', 'condiciones', 'pedidos'];
 const TITLES  = {
   dashboard:    '🏠 Dashboard',
   inventario:   '📦 Inventario',
@@ -11,6 +11,7 @@ const TITLES  = {
   clientes:     '👥 Clientes B2B',
   sabores:      '🍨 Sabores B2B',
   condiciones:  '💶 Condiciones Comerciales',
+  pedidos:      '📋 Pedidos B2B',
 };
 
 // ── Grupos de navegación ──────────────────────────────────────────────────────
@@ -22,8 +23,8 @@ const GROUPS = {
   },
   b2b: {
     default: 'clientes',
-    screens: ['clientes', 'sabores', 'condiciones'],
-    labels:  { clientes: '👥 Clientes', sabores: '🍨 Sabores', condiciones: '💶 Tarifas' },
+    screens: ['clientes', 'sabores', 'condiciones', 'pedidos'],
+    labels:  { clientes: '👥 Clientes', sabores: '🍨 Sabores', condiciones: '💶 Tarifas', pedidos: '📋 Pedidos' },
   },
 };
 
@@ -34,6 +35,7 @@ const SCREEN_GROUP = {
   clientes:    'b2b',
   sabores:     'b2b',
   condiciones: 'b2b',
+  pedidos:     'b2b',
 };
 
 // ── Utilidades globales ───────────────────────────────────────────────────────
@@ -119,6 +121,7 @@ const App = {
       case 'clientes':    Clientes.load();    break;
       case 'sabores':     Sabores.load();     break;
       case 'condiciones': Condiciones.load(); break;
+      case 'pedidos':     Pedidos.load();     break;
     }
 
     window.location.hash = screen;
