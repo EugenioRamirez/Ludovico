@@ -7,28 +7,31 @@ const RECETAS = [
   { categoria:"Chocolates & Cacao", nombre:"Helado de Chocolate con Leche",
     total:1511, ingredientes:[["Leche entera",1000],["Azúcar",160],["Dextrosa",40],["Glicerina",50],["Base Pro Crema",100],["Cacao amargo",200],["Sal",1]]},
   { categoria:"Chocolates & Cacao", nombre:"Helado de Chocolate Blanco",
-    total:1151, ingredientes:[["Leche",650],["Base Pro Crema",100],["Cobertura blanca",350],["Glicerina",50],["Sal",1]]},
+    total:1151, ingredientes:[["Leche entera",650],["Base Pro Crema",100],["Cobertura blanca",350],["Glicerina",50],["Sal",1]]},
   { categoria:"Chocolates & Cacao", nombre:"Helado de Gianduja",
     subtitle:"Chocolate con Avellana",
-    total:1341, ingredientes:[["Leche",840],["Azúcar",120],["Dextrosa",60],["Base Pro Crema",100],["Cacao amargo",60],["Pasta de avellana",160],["Sal",1]]},
+    total:1341, ingredientes:[["Leche entera",840],["Azúcar",120],["Dextrosa",60],["Base Pro Crema",100],["Cacao amargo",60],["Pasta de avellana",160],["Sal",1]]},
+  { categoria:"Chocolates & Cacao", nombre:"Helado de Chocolate con Maracuyá",
+    litros_base:1, total:1000,
+    ingredientes:[["Leche entera",496],["Nata 35%",70],["Leche en polvo",55],["Profiber",4],["Dextrosa",90],["Azúcar",50],["Cacao",100],["Fruta de la Pasión",135]]},
 
   // ── Frutos Secos & Pralinés ────────────────────────────────────────────────
   { categoria:"Frutos Secos & Pralinés", nombre:"Helado de Pistacho",
     total:1231, ingredientes:[["Leche entera",750],["Azúcar",100],["Base Pro Crema",100],["Glicerina",30],["Pasta de pistacho",250],["Sal",1]]},
   { categoria:"Frutos Secos & Pralinés", nombre:"Helado de Avellana",
-    total:1281, ingredientes:[["Leche",725],["Azúcar",50],["Dextrosa",20],["Base Pro Crema",100],["Glicerina",30],["Pasta de avellana",275],["Sal",1]]},
+    total:1281, ingredientes:[["Leche entera",725],["Azúcar",50],["Dextrosa",20],["Base Pro Crema",100],["Glicerina",30],["Pasta de avellana",275],["Sal",1]]},
   { categoria:"Frutos Secos & Pralinés", nombre:"Helado de Nueces",
-    total:1321, ingredientes:[["Leche",850],["Azúcar",220],["Base Pro Crema",100],["Pasta de nuez 100%",150],["Sal",1]]},
+    total:1321, ingredientes:[["Leche entera",850],["Azúcar",220],["Base Pro Crema",100],["Pasta de nuez 100%",150],["Sal",1]]},
   { categoria:"Frutos Secos & Pralinés", nombre:"Helado de Turrón",
-    total:1221, ingredientes:[["Leche",700],["Base Pro Crema",100],["Dextrosa",50],["Glicerina",20],["Pasta de turrón",300]]},
+    total:1221, ingredientes:[["Leche entera",700],["Base Pro Crema",100],["Dextrosa",50],["Glicerina",20],["Pasta de turrón",300]]},
 
   // ── Helados Clásicos ───────────────────────────────────────────────────────
   { categoria:"Helados Clásicos", nombre:"Helado Stracciatella",
     subtitle:"Base láctea para Stracciatella",
-    total:945, ingredientes:[["Leche entera",584],["Nata",166],["Azúcar",65],["Dextrosa",63],["Leche en polvo 1%",30],["Glucosa",23],["Maltodextrina",10],["Profibe R",4]]},
+    total:945, ingredientes:[["Leche entera",584],["Nata 35%",166],["Azúcar",65],["Dextrosa",63],["Leche en polvo 1%",30],["Glucosa",23],["Maltodextrina",10],["Profibe R",4]]},
   { categoria:"Helados Clásicos", nombre:"Helado de Vainilla",
     subtitle:"Con Yema de Huevo",
-    total:1310, ingredientes:[["Leche",700],["Azúcar",140],["Dextrosa",50],["Glicerina",20],["Base Pro Crema",80],["Nata 35%",150],["Yema de huevo",150],["Extracto de vainilla",20],["Sal",1]]},
+    total:1310, ingredientes:[["Leche entera",700],["Azúcar",140],["Dextrosa",50],["Glicerina",20],["Base Pro Crema",80],["Nata 35%",150],["Yema de huevo",150],["Extracto natural de vainilla",20],["Sal",1]]},
   { categoria:"Helados Clásicos", nombre:"Helado de Vainilla Sin Azúcar",
     total:1545, ingredientes:[["Leche entera",1000],["Azúcar",150],["Dextrosa",50],["Glicerina",25],["Base Pro Crema",100],["Nata 35%",200],["Extracto natural de vainilla",20],["Sal",1]]},
   { categoria:"Helados Clásicos", nombre:"Helado de Nata",
@@ -39,7 +42,6 @@ const RECETAS = [
     total:1255, ingredientes:[["Leche entera",250],["Azúcar",80],["Dextrosa",40],["Base Pro Crema",100],["Yogur natural griego",750],["Glicerina",15],["Yogur en polvo",20]]},
 
   // ── Sorbetes & Frutas ─────────────────────────────────────────────────────
-  // Receta unificada base 5 litros — cambiar Puré según el sabor
   { categoria:"Sorbetes & Frutas", nombre:"Helado de Mango",
     litros_base:5, total:3794,
     ingredientes:[["Agua",850],["Dextrosa",356],["Azúcar",272],["Inulina",188],["Maltodextrina",118],["Profiber",10],["Puré de Mango",2000]]},
@@ -80,6 +82,12 @@ const RECETAS = [
   { categoria:"Especiales & Gourmets", nombre:"Helado de Pasa al Ron",
     nota:"Velocidad lenta para escurrir al Ron.",
     total:null, ingredientes:[["Leche entera",1000],["Azúcar",200],["Dextrosa",50],["Base Pro Crema",92],["Nata 35%",150],["Pasta Málaga suave",80]]},
+  { categoria:"Especiales & Gourmets", nombre:"Helado de AOVE",
+    litros_base:5, total:4752,
+    ingredientes:[["Agua",3000],["Azúcar",750],["Profiber",35],["Leche en polvo",464],["Dextrosa",124],["Azúcar invertido",124],["AOVE",250],["Sal",5]]},
+  { categoria:"Especiales & Gourmets", nombre:"Helado de Matcha",
+    litros_base:1, total:1229,
+    ingredientes:[["Leche entera",750],["Nata 35%",200],["Azúcar",100],["Base Pro Crema",125],["Matcha",28],["Dextrosa",25],["Sal",1]]},
 
   // ── Granizados & Bebidas ───────────────────────────────────────────────────
   { categoria:"Granizados & Bebidas", nombre:"Granizado de Limón",
@@ -107,7 +115,6 @@ const Calculadora = {
         if (e.key === 'Enter') this.calcular();
       });
 
-      // Botón Preparar Mix
       const btnMix = document.getElementById('btn-preparar-mix');
       if (btnMix) {
         btnMix.addEventListener('click', () => {
@@ -162,11 +169,9 @@ const Calculadora = {
     let totalCalc = 0;
     r.ingredientes.forEach(([, g]) => { if (g) totalCalc += g * factor; });
 
-    // Guardar para botón Preparar Mix
-    this._ultimoNombre = r.nombre;
+    this._ultimoNombre  = r.nombre;
     this._ultimosLitros = litros;
 
-    // Header resultado
     document.getElementById('calc-res-nombre').textContent = r.nombre;
     document.getElementById('calc-res-sub').textContent    = r.subtitle || r.categoria;
     document.getElementById('calc-res-litros').textContent = litros + ' L';
@@ -174,16 +179,13 @@ const Calculadora = {
     document.getElementById('calc-res-total').textContent  =
       r.total ? this.fmtG(r.total * factor) + ' total' : '—';
 
-    // Tabla ingredientes
     const tbody = document.getElementById('calc-tbody');
     tbody.innerHTML = r.ingredientes.map(([ing, g]) =>
       `<tr><td>${ing}</td><td>${this.fmtG(g ? g * factor : null)}</td></tr>`
     ).join('');
 
-    // Tfoot
     document.getElementById('calc-tfoot-total').textContent = this.fmtG(totalCalc);
 
-    // Nota
     const notaEl = document.getElementById('calc-nota');
     if (r.nota) {
       notaEl.textContent = '⚠️ ' + r.nota;
@@ -192,7 +194,6 @@ const Calculadora = {
       notaEl.classList.add('hidden');
     }
 
-    // Mostrar resultado y botón Preparar Mix
     document.getElementById('calc-empty').classList.add('hidden');
     document.getElementById('calc-result').classList.remove('hidden');
     const btnMix = document.getElementById('btn-preparar-mix');
