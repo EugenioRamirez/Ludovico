@@ -25,7 +25,8 @@ const Planificacion = {
   },
 
   _calcLinea(receta, litros) {
-    const factor = litros / BASE_LITROS;
+    const base   = receta.litros_base || BASE_LITROS;
+    const factor = litros / base;
     const ings = receta.ingredientes.map(([nombre, g]) => ({
       nombre,
       cantidad_g: g !== null && g !== undefined ? g * factor : null,
