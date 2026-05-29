@@ -1,4 +1,4 @@
-// ── calculadora.js · Calculadora de Recetas ───────────────────────────────────
+// ── calculadora.js · Calculadora de Recetas · v2 ─────────────────────────────
 
 const BASE_LITROS = 2.5;   // litros base por defecto (recetas sin litros_base)
 
