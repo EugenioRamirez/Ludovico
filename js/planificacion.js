@@ -232,6 +232,12 @@ const Planificacion = {
     this._recalcularIngredientes();
   },
 
+  _toggleDetalleSabores(btn) {
+    const detalle = btn.closest('#ws-resumen').querySelector('.ws-detalle-sabores');
+    const oculto  = detalle.classList.toggle('hidden');
+    btn.textContent = oculto ? 'Ver por sabor ▾' : 'Ocultar detalle ▴';
+  },
+
   _onLitrosChange(input) {
     // Resaltar la fila si tiene valor
     const fila = input.closest('.ws-sabor-row');
@@ -266,54 +272,56 @@ const Planificacion = {
     const consolidado = this._consolidar(lineasCalc);
     const totalMasaG  = consolidado.reduce((s, c) => s + c.total_g, 0);
 
-    let html = '';
-
-    // Resumen por sabor
-    html += `<div class="ws-res-titulo">🍨 Por sabor — ${lineasCalc.length} sabor${lineasCalc.length > 1 ? 'es' : ''} · ${fmtNum(totalLitros)} L totales</div>`;
-    html += '<div class="ws-res-sabores">';
-    lineasCalc.forEach(l => {
-      html += `
-        <div class="ws-res-sabor">
-          <div class="ws-res-sabor-header">
-            <span>${escHtml(l.receta_nombre)}</span>
-            <span class="ws-res-sabor-meta">${fmtNum(l.litros)} L · ×${l.factor.toFixed(2)}</span>
-          </div>
-          <table class="plan-ing-table">
-            <tbody>
-              ${l.ings.map(ing => `
-                <tr>
-                  <td>${escHtml(ing.nombre)}</td>
-                  <td class="plan-ing-qty">${this._fmtKg(ing.cantidad_g)}</td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
-    });
-    html += '</div>';
-
-    // Consolidado
-    if (lineasCalc.length > 1) {
-      html += `
-        <div class="ws-res-consolidado">
-          <div class="ws-res-titulo">📊 Ingredientes consolidados</div>
-          <table class="plan-ing-table plan-ing-table-full">
-            <thead><tr><th>Ingrediente</th><th class="plan-ing-qty">Total</th></tr></thead>
-            <tbody>
-              ${consolidado.map(c => `
-                <tr>
-                  <td>${escHtml(c.nombre)}</td>
-                  <td class="plan-ing-qty plan-ing-qty-total">${this._fmtKg(c.total_g)}</td>
-                </tr>`).join('')}
-            </tbody>
-            <tfoot>
+    // Detalle por sabor (colapsado por defecto)
+    const detalleSaboresHtml = lineasCalc.map(l => `
+      <div class="ws-res-sabor">
+        <div class="ws-res-sabor-header">
+          <span>${escHtml(l.receta_nombre)}</span>
+          <span class="ws-res-sabor-meta">${fmtNum(l.litros)} L · ×${l.factor.toFixed(2)}</span>
+        </div>
+        <table class="plan-ing-table">
+          <tbody>
+            ${l.ings.map(ing => `
               <tr>
-                <td><strong>Masa total</strong></td>
-                <td class="plan-ing-qty"><strong>${this._fmtKg(totalMasaG)}</strong></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>`;
-    }
+                <td>${escHtml(ing.nombre)}</td>
+                <td class="plan-ing-qty">${this._fmtKg(ing.cantidad_g)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`).join('');
+
+    const html = `
+      <!-- Resumen de sabores seleccionados -->
+      <div class="ws-res-summary-bar">
+        <span class="ws-res-summary-txt">🍨 ${lineasCalc.length} sabor${lineasCalc.length > 1 ? 'es' : ''} · ${fmtNum(totalLitros)} L totales</span>
+        <button class="ws-btn-toggle-detalle" onclick="Planificacion._toggleDetalleSabores(this)">Ver por sabor ▾</button>
+      </div>
+
+      <!-- Detalle por sabor (oculto por defecto) -->
+      <div class="ws-res-sabores ws-detalle-sabores hidden">
+        ${detalleSaboresHtml}
+      </div>
+
+      <!-- Consolidado (siempre visible) -->
+      <div class="ws-res-consolidado">
+        <div class="ws-res-titulo">📊 Ingredientes consolidados</div>
+        <table class="plan-ing-table plan-ing-table-full">
+          <thead><tr><th>Ingrediente</th><th class="plan-ing-qty">Total</th></tr></thead>
+          <tbody>
+            ${consolidado.map(c => `
+              <tr>
+                <td>${escHtml(c.nombre)}</td>
+                <td class="plan-ing-qty plan-ing-qty-total">${this._fmtKg(c.total_g)}</td>
+              </tr>`).join('')}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td><strong>Masa total</strong></td>
+              <td class="plan-ing-qty"><strong>${this._fmtKg(totalMasaG)}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>`;
 
     elResumen.innerHTML = html;
   },

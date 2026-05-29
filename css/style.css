@@ -1787,3 +1787,16 @@ select {
   background: white; border-radius: 10px; padding: 12px;
   box-shadow: var(--shadow); margin-top: 4px;
 }
+
+/* Barra resumen + toggle detalle sabores */
+.ws-res-summary-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 0 8px; border-bottom: 2px solid var(--border); margin-bottom: 10px;
+}
+.ws-res-summary-txt { font-size: 12px; font-weight: 700; color: var(--text); }
+.ws-btn-toggle-detalle {
+  background: none; border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--text-muted);
+  cursor: pointer; font-family: 'Poppins', sans-serif; transition: all .15s;
+}
+.ws-btn-toggle-detalle:hover { border-color: var(--cyan); color: var(--blue); }
