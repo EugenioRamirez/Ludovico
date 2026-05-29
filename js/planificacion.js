@@ -189,7 +189,10 @@ const Planificacion = {
     // Botones de acción
     const acciones = document.getElementById('ws-acciones');
     if (esCerrada) {
-      acciones.innerHTML = '<span class="plan-cerrada-msg">🔒 Planificación cerrada — solo lectura</span>';
+      acciones.innerHTML = `
+        <span class="plan-cerrada-msg">🔒 Planificación cerrada — solo lectura</span>
+        <button class="btn btn-ghost btn-sm" onclick="Planificacion.generarPDF('${plan.id}')">📄 Descargar PDF</button>
+        <button class="btn btn-danger-outline btn-sm" onclick="Planificacion.eliminar('${plan.id}')">🗑️ Eliminar</button>`;
     } else {
       acciones.innerHTML = `
         <button class="btn btn-ghost btn-sm" onclick="Planificacion._editarCabecera('${plan.id}')">✏️ Editar datos</button>
@@ -197,7 +200,9 @@ const Planificacion = {
         ${plan.estado === 'borrador'
           ? `<button class="btn btn-secondary btn-sm" onclick="Planificacion.marcarCalculada('${plan.id}')">🧮 Marcar calculada</button>`
           : ''}
-        <button class="btn btn-danger-outline btn-sm" onclick="Planificacion.cerrar('${plan.id}')">🔒 Cerrar</button>`;
+        <button class="btn btn-ghost btn-sm" onclick="Planificacion.generarPDF('${plan.id}')">📄 PDF</button>
+        <button class="btn btn-danger-outline btn-sm" onclick="Planificacion.cerrar('${plan.id}')">🔒 Cerrar</button>
+        <button class="btn btn-danger-outline btn-sm" onclick="Planificacion.eliminar('${plan.id}')">🗑️ Eliminar</button>`;
     }
 
     // Grid de sabores por categoría
@@ -391,6 +396,141 @@ const Planificacion = {
     showToast('Planificación cerrada', 'info');
     closeModal('modal-plan-ws-overlay');
     await this.load();
+  },
+
+  async eliminar(planId) {
+    if (!confirm('¿Eliminar esta planificación? Esta acción no se puede deshacer.')) return;
+    const { error } = await sb
+      .from('planificaciones_produccion')
+      .delete()
+      .eq('id', planId);
+    if (error) { showToast('Error al eliminar', 'error'); return; }
+    showToast('Planificación eliminada', 'info');
+    closeModal('modal-plan-ws-overlay');
+    await this.load();
+  },
+
+  async generarPDF(planId) {
+    const plan = this.lista.find(p => p.id === planId);
+    if (!plan) return;
+
+    const { data: lineas } = await sb
+      .from('planificacion_lineas')
+      .select('*')
+      .eq('planificacion_id', planId)
+      .order('created_at');
+
+    // Calcular
+    const lineasCalc = (lineas || []).map(l => {
+      const receta = this._findReceta(l.receta_nombre);
+      if (!receta) return null;
+      const { factor, ings } = this._calcLinea(receta, parseFloat(l.litros_solicitados));
+      return { ...l, receta, factor, ings };
+    }).filter(Boolean);
+
+    const consolidado  = this._consolidar(lineasCalc);
+    const totalLitros  = lineasCalc.reduce((s, l) => s + parseFloat(l.litros_solicitados), 0);
+    const totalMasaG   = consolidado.reduce((s, c) => s + c.total_g, 0);
+    const nombre       = plan.nombre || `Planificación ${fmtFecha(plan.fecha_planificacion)}`;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const W = 210, margin = 14;
+    let y = 0;
+
+    // ── Cabecera ────────────────────────────────────────────────────────────
+    doc.setFillColor(21, 101, 160);
+    doc.rect(0, 0, W, 22, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+    doc.text('Helados Ludovico · Planificación de Producción', margin, 14);
+    y = 30;
+
+    // ── Datos planificación ─────────────────────────────────────────────────
+    doc.setTextColor(13, 46, 74);
+    doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+    doc.text(nombre, margin, y); y += 7;
+
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+    doc.setTextColor(107, 142, 170);
+    let meta = `Fecha: ${fmtFecha(plan.fecha_planificacion)}`;
+    if (plan.fecha_objetivo) meta += `   |   Objetivo: ${fmtFecha(plan.fecha_objetivo)}`;
+    meta += `   |   Estado: ${plan.estado}`;
+    doc.text(meta, margin, y); y += 5;
+    if (plan.observaciones) {
+      doc.text(`Obs: ${plan.observaciones}`, margin, y); y += 5;
+    }
+    y += 3;
+
+    // ── Resumen sabores ─────────────────────────────────────────────────────
+    doc.setFillColor(224, 246, 250);
+    doc.rect(margin, y, W - margin * 2, 7, 'F');
+    doc.setTextColor(13, 46, 74); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.text(`Sabores planificados — ${lineasCalc.length} sabores · ${fmtNum(totalLitros)} L totales`, margin + 2, y + 5);
+    y += 10;
+
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+    lineasCalc.forEach(l => {
+      if (y > 270) { doc.addPage(); y = 20; }
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(21, 101, 160);
+      doc.text(`${l.receta_nombre}`, margin, y);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(107, 142, 170);
+      doc.text(`${fmtNum(l.litros_solicitados)} L · ×${l.factor.toFixed(2)}`, W - margin, y, { align: 'right' });
+      y += 5;
+    });
+    y += 4;
+
+    // ── Ingredientes consolidados ───────────────────────────────────────────
+    if (y > 240) { doc.addPage(); y = 20; }
+
+    doc.setFillColor(21, 101, 160);
+    doc.rect(margin, y, W - margin * 2, 7, 'F');
+    doc.setTextColor(255, 255, 255); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+    doc.text('Ingredientes consolidados', margin + 2, y + 5);
+    y += 10;
+
+    // Cabecera tabla
+    doc.setFillColor(240, 244, 248);
+    doc.rect(margin, y, W - margin * 2, 6, 'F');
+    doc.setTextColor(13, 46, 74); doc.setFontSize(8); doc.setFont('helvetica', 'bold');
+    doc.text('Ingrediente', margin + 2, y + 4);
+    doc.text('Cantidad total', W - margin - 2, y + 4, { align: 'right' });
+    y += 7;
+
+    // Filas
+    doc.setFont('helvetica', 'normal');
+    consolidado.forEach((c, i) => {
+      if (y > 275) { doc.addPage(); y = 20; }
+      if (i % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, y - 1, W - margin * 2, 6, 'F');
+      }
+      doc.setTextColor(13, 46, 74);
+      doc.text(c.nombre, margin + 2, y + 3);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(21, 101, 160);
+      doc.text(this._fmtKg(c.total_g), W - margin - 2, y + 3, { align: 'right' });
+      doc.setFont('helvetica', 'normal');
+      y += 6;
+    });
+
+    // Total masa
+    y += 2;
+    doc.setDrawColor(197, 223, 240);
+    doc.line(margin, y, W - margin, y); y += 4;
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(13, 46, 74); doc.setFontSize(9);
+    doc.text('Masa total', margin + 2, y + 3);
+    doc.text(this._fmtKg(totalMasaG), W - margin - 2, y + 3, { align: 'right' });
+
+    // ── Footer ──────────────────────────────────────────────────────────────
+    doc.setFontSize(7); doc.setFont('helvetica', 'normal'); doc.setTextColor(150, 150, 150);
+    doc.text(`Generado el ${new Date().toLocaleDateString('es-ES')} · Helados Ludovico`, W / 2, 290, { align: 'center' });
+
+    const filename = `planificacion_${(nombre).replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${plan.fecha_planificacion}.pdf`;
+    doc.save(filename);
+  },
+
+  _findReceta(nombre) {
+    return RECETAS.find(r => r.nombre === nombre) || null;
   },
 
   async _editarCabecera(planId) {
