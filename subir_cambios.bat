@@ -23,3 +23,4 @@ git push origin master:main
 echo.
 echo Listo. Pulsa cualquier tecla para cerrar.
 pause >nul
+REM redeploy
