@@ -131,8 +131,7 @@ const Condiciones = {
     const list    = this.filtered();
     const el      = document.getElementById('condiciones-list');
     const esAdmin = Estado.getEmpleada() === 'Administrador';
-
-    const fab = document.getElementById('fab-add-condicion');
+    const fab     = document.getElementById('fab-add-condicion');
 
     if (!this.filtroCliente) {
       el.innerHTML = '<div class="empty-msg">Selecciona un cliente para ver sus tarifas</div>';
@@ -143,97 +142,73 @@ const Condiciones = {
     fab.classList.toggle('hidden', !esAdmin);
 
     if (!list.length) {
-      el.innerHTML = '<div class="empty-msg">No hay tarifas para este cliente</div>';
+      el.innerHTML = '<div class="empty-msg">No hay tarifas para este cliente.<br><small>Usa ＋ para añadir un sabor.</small></div>';
       return;
     }
 
-    el.innerHTML = list.map(c => {
-      const cliente  = this.nombreCliente(c.clientes_b2b);
-      const sabor    = c.sabores_b2b?.nombre || '–';
-      const catLabel = this.CAT_LABELS[c.sabores_b2b?.categoria] || '';
-      const catBadge = this.CAT_BADGE[c.sabores_b2b?.categoria]  || 'badge-ok';
+    // ── Separar activas / inactivas ──────────────────────────────────────────
+    const activas   = list.filter(c => c.activa);
+    const inactivas = list.filter(c => !c.activa);
 
-      const precioBase  = parseFloat(c.precio_litro).toFixed(2);
-      const precioMeta  = c.es_promocional && c.precio_promocional !== null
-        ? `<s style="color:var(--text-muted)">${precioBase}€</s> ${parseFloat(c.precio_promocional).toFixed(2)} €/L 🎁`
-        : `${precioBase} €/L`;
-
-      const estadoBadge = c.activa
-        ? '<span class="badge badge-ok">Activa</span>'
-        : '<span class="badge badge-crit">Inactiva</span>';
-
-      const fechas = c.fecha_fin
-        ? `${fmtFecha(c.fecha_inicio)} → ${fmtFecha(c.fecha_fin)}`
+    const renderCard = c => {
+      const sabor      = c.sabores_b2b?.nombre || '–';
+      const cat        = c.sabores_b2b?.categoria || '';
+      const catLabel   = this.CAT_LABELS[cat] || '';
+      const catBadge   = this.CAT_BADGE[cat]  || '';
+      const precioBase = parseFloat(c.precio_litro).toFixed(2);
+      const tienePromo = c.es_promocional && c.precio_promocional !== null;
+      const precioPromo = tienePromo ? parseFloat(c.precio_promocional).toFixed(2) : null;
+      const fechas     = c.fecha_fin
+        ? `${fmtFecha(c.fecha_inicio)} – ${fmtFecha(c.fecha_fin)}`
         : `Desde ${fmtFecha(c.fecha_inicio)}`;
 
-      const acciones = esAdmin ? `
-        <div class="acord-actions">
-          <button class="btn btn-sm btn-outline btn-edit-condicion" data-id="${c.id}">✏️ Editar</button>
-          <button class="btn btn-sm btn-ghost btn-toggle-condicion" data-id="${c.id}" data-activa="${c.activa}">
-            ${c.activa ? '🔴 Desactivar' : '🟢 Activar'}
-          </button>
-        </div>` : '';
-
       return `
-        <div class="acord-row" data-id="${c.id}">
-          <div class="acord-summary">
-            <div class="acord-main">
-              <span class="acord-nombre">${escHtml(cliente)}</span>
-              <div class="acord-meta">
-                <span class="acord-meta-txt">${escHtml(sabor)}</span>
-                ${catLabel ? `<span class="badge ${catBadge}" style="font-size:10px;padding:2px 7px">${catLabel}</span>` : ''}
-              </div>
-            </div>
-            <div class="acord-right">
-              ${estadoBadge}
-              <span class="acord-chevron">›</span>
-            </div>
+        <div class="cond-card ${!c.activa ? 'cond-card-inactiva' : ''} ${tienePromo ? 'cond-card-promo' : ''}">
+          <div class="cond-card-top">
+            <span class="cond-sabor-nombre">${escHtml(sabor)}</span>
+            ${catLabel ? `<span class="badge ${catBadge} cond-cat-badge">${catLabel}</span>` : ''}
           </div>
-          <div class="acord-detail">
-            <div class="acord-grid">
-              <div class="acord-field">
-                <span class="acord-field-lbl">Precio</span>
-                <span class="acord-field-val">${precioMeta}</span>
-              </div>
-              <div class="acord-field">
-                <span class="acord-field-lbl">Vigencia</span>
-                <span class="acord-field-val">${fechas}</span>
-              </div>
-              ${c.notas_comerciales ? `
-              <div class="acord-field acord-field-full">
-                <span class="acord-field-lbl">Notas comerciales</span>
-                <span class="acord-field-val">${escHtml(c.notas_comerciales)}</span>
-              </div>` : ''}
-              ${c.observaciones ? `
-              <div class="acord-field acord-field-full">
-                <span class="acord-field-lbl">Observaciones internas</span>
-                <span class="acord-field-val">${escHtml(c.observaciones)}</span>
-              </div>` : ''}
-            </div>
-            ${acciones}
+          <div class="cond-precio-area">
+            ${tienePromo ? `
+              <div class="cond-precio-original">${precioBase} €/L</div>
+              <div class="cond-precio-promo">${precioPromo} €/L</div>
+              <div class="cond-promo-pill">🎁 Promoción</div>
+            ` : `
+              <div class="cond-precio-normal">${precioBase} €/L</div>
+            `}
           </div>
-        </div>
-      `;
-    }).join('');
+          <div class="cond-card-footer">
+            <span class="cond-vigencia">${fechas}</span>
+            ${esAdmin ? `
+              <div class="cond-card-actions">
+                <button class="btn-cond-edit btn-edit-condicion" data-id="${c.id}" title="Editar">✏️</button>
+                <button class="btn-cond-toggle btn-toggle-condicion" data-id="${c.id}" data-activa="${c.activa}"
+                  title="${c.activa ? 'Desactivar' : 'Activar'}">${c.activa ? '🔴' : '🟢'}</button>
+              </div>` : ''}
+          </div>
+          ${c.notas_comerciales ? `<div class="cond-nota">💬 ${escHtml(c.notas_comerciales)}</div>` : ''}
+        </div>`;
+    };
 
-    // Toggle acordeón
-    el.querySelectorAll('.acord-summary').forEach(summary => {
-      summary.addEventListener('click', () => {
-        const row    = summary.closest('.acord-row');
-        const isOpen = row.classList.contains('open');
-        el.querySelectorAll('.acord-row.open').forEach(r => r.classList.remove('open'));
-        if (!isOpen) row.classList.add('open');
-      });
-    });
+    let html = '<div class="cond-grid">';
+    activas.forEach(c => { html += renderCard(c); });
+    html += '</div>';
 
-    // Botones
+    if (inactivas.length) {
+      html += `<div class="cond-inactivas-titulo">Tarifas inactivas (${inactivas.length})</div>`;
+      html += '<div class="cond-grid cond-grid-inactivas">';
+      inactivas.forEach(c => { html += renderCard(c); });
+      html += '</div>';
+    }
+
+    el.innerHTML = html;
+
     el.querySelectorAll('.btn-edit-condicion').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); this.openModal(btn.dataset.id); });
     });
     el.querySelectorAll('.btn-toggle-condicion').forEach(btn => {
       btn.addEventListener('click', e => { e.stopPropagation(); this.toggleActiva(btn.dataset.id, btn.dataset.activa === 'true'); });
     });
-
   },
 
   // ── Toggle activa ────────────────────────────────────────────────────────────
