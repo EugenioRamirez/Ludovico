@@ -421,6 +421,7 @@
         <button class="fab" id="fab-nueva-plan" title="Nueva planificación"
           onclick="Planificacion.abrirModalNueva()">＋</button>
 
+
       </section>
 
     </main><!-- /main-content -->
@@ -428,20 +429,18 @@
   </div><!-- /app-layout -->
 
   <!-- ══════════════════════════════════════════════
-       MODAL · Planificación de producción
+       MODAL · Nueva planificación (cabecera)
   ══════════════════════════════════════════════ -->
   <div class="modal-overlay hidden" id="modal-plan-overlay">
-    <div class="modal" style="max-width:520px">
+    <div class="modal" style="max-width:420px">
       <div class="modal-header">
         <h2 id="plan-modal-titulo">Nueva planificación</h2>
         <button class="modal-close" onclick="closeModal('modal-plan-overlay')">✕</button>
       </div>
       <div class="modal-body">
-
-        <!-- Cabecera -->
         <div class="form-group">
-          <label>Nombre de la planificación <span class="lbl-opt">(opcional)</span></label>
-          <input type="text" id="plan-modal-nombre" placeholder="Ej: Semana 23 - Verano">
+          <label>Nombre <span class="lbl-opt">(opcional)</span></label>
+          <input type="text" id="plan-modal-nombre" placeholder="Ej: Semana 23 · Verano">
         </div>
         <div class="form-row-2">
           <div class="form-group">
@@ -449,7 +448,7 @@
             <input type="date" id="plan-modal-fecha">
           </div>
           <div class="form-group">
-            <label>Fecha objetivo producción <span class="lbl-opt">(opc.)</span></label>
+            <label>Fecha objetivo <span class="lbl-opt">(opc.)</span></label>
             <input type="date" id="plan-modal-fecha-obj">
           </div>
         </div>
@@ -457,29 +456,57 @@
           <label>Observaciones <span class="lbl-opt">(opcional)</span></label>
           <textarea id="plan-modal-obs" rows="2" placeholder="Notas internas…"></textarea>
         </div>
-
-        <!-- Líneas de sabores -->
-        <div class="plan-filas-section">
-          <div class="plan-filas-header">
-            <span class="plan-filas-title">🍨 Sabores a producir</span>
-            <button type="button" class="btn btn-sm btn-ghost"
-              onclick="Planificacion._agregarFila()">＋ Añadir sabor</button>
-          </div>
-          <div id="plan-filas-body"></div>
-        </div>
-
-        <!-- Error -->
         <div class="form-error" id="plan-modal-error"></div>
-
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modal-plan-overlay')">Cancelar</button>
-        <button class="btn btn-primary" id="plan-btn-guardar"
-          onclick="Planificacion.guardar()">💾 Guardar planificación</button>
+        <button class="btn btn-primary" id="plan-btn-crear"
+          onclick="Planificacion.crearPlanificacion()">➡️ Crear y añadir sabores</button>
       </div>
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════════════
+       WORKSHEET · Hoja de planificación
+  ══════════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modal-plan-ws-overlay">
+    <div class="modal ws-modal">
+
+      <!-- Header del worksheet -->
+      <div class="ws-header">
+        <div class="ws-header-left">
+          <h2 id="ws-titulo">Planificación</h2>
+          <div class="ws-header-meta">
+            <span id="ws-fecha"></span>
+            <span id="ws-estado"></span>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-plan-ws-overlay')">✕</button>
+      </div>
+
+      <!-- Acciones -->
+      <div class="ws-acciones" id="ws-acciones"></div>
+
+      <!-- Cuerpo: grid izquierda + resumen derecha -->
+      <div class="ws-body">
+
+        <!-- Columna izquierda: sabores -->
+        <div class="ws-col-sabores">
+          <div class="ws-col-title">🍨 Sabores — introduce los litros que quieres producir</div>
+          <div id="ws-grid"></div>
+        </div>
+
+        <!-- Columna derecha: cálculo en tiempo real -->
+        <div class="ws-col-resumen">
+          <div class="ws-col-title">📊 Ingredientes necesarios</div>
+          <div id="ws-resumen">
+            <div class="ws-empty-calc">Introduce litros en al menos un sabor para ver el cálculo.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════════════════
        MODALES
