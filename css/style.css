@@ -1873,3 +1873,34 @@ select {
   margin-bottom: 8px; margin-top: 4px;
 }
 .cond-grid-inactivas { opacity: 0.8; }
+
+/* ── Tabla de tarifas (reemplaza el grid de cards) ─────────── */
+.cond-tabla {
+  width: 100%; border-collapse: collapse;
+  background: white; border-radius: 14px; overflow: hidden;
+  box-shadow: var(--shadow); margin-bottom: 16px; font-size: 13px;
+}
+.cond-tabla thead th {
+  background: var(--blue); color: white;
+  padding: 10px 12px; text-align: left;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.cond-tabla tbody tr { border-bottom: 1px solid var(--border); }
+.cond-tabla tbody tr:last-child { border-bottom: none; }
+.cond-tabla tbody tr:hover { background: var(--cyan-pale); }
+.cond-tabla td { padding: 10px 12px; vertical-align: middle; }
+.cond-td-sabor { font-weight: 700; color: var(--text); }
+.cond-td-precio { white-space: nowrap; }
+.cond-precio-tachado { color: var(--text-muted); font-size: 11px; margin-right: 4px; }
+.cond-precio-promo-val { color: var(--orange); }
+.cond-promo-pill {
+  background: #FFF3E0; color: var(--orange);
+  border-radius: 8px; padding: 2px 8px;
+  font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.cond-sin-promo { color: var(--text-muted); }
+.cond-td-vigencia { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.cond-td-acciones { white-space: nowrap; }
+.cond-fila-inactiva td { opacity: 0.5; }
+.cond-tabla-inactivas { opacity: 0.8; }

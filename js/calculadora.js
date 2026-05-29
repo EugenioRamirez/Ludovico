@@ -97,7 +97,9 @@ const RECETAS = [
   { categoria:"Granizados & Bebidas", nombre:"Granizada de Café",
     total:1170, ingredientes:[["Agua",1000],["Azúcar",150],["Nescafé clásico",20]]},
   { categoria:"Granizados & Bebidas", nombre:"Granizada de Sandía",
-    total:null, ingredientes:[["Zumo licuado de sandía",5000],["Azúcar",375],["Agua",5000]]},
+    litros_base:10,
+    nota:"Completar a 10 litros con agua.",
+    total:7275, ingredientes:[["Zumo de sandía",5000],["Zumo de limón",100],["Azúcar",2175]]},
 ];
 
 // ── Módulo Calculadora ────────────────────────────────────────────────────────

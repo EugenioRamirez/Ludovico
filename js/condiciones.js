@@ -150,7 +150,7 @@ const Condiciones = {
     const activas   = list.filter(c => c.activa);
     const inactivas = list.filter(c => !c.activa);
 
-    const renderCard = c => {
+    const renderFila = c => {
       const sabor      = c.sabores_b2b?.nombre || '–';
       const cat        = c.sabores_b2b?.categoria || '';
       const catLabel   = this.CAT_LABELS[cat] || '';
@@ -158,47 +158,53 @@ const Condiciones = {
       const precioBase = parseFloat(c.precio_litro).toFixed(2);
       const tienePromo = c.es_promocional && c.precio_promocional !== null;
       const precioPromo = tienePromo ? parseFloat(c.precio_promocional).toFixed(2) : null;
-      const fechas     = c.fecha_fin
-        ? `${fmtFecha(c.fecha_inicio)} – ${fmtFecha(c.fecha_fin)}`
+      const vigencia   = c.fecha_fin
+        ? `${fmtFecha(c.fecha_inicio)} → ${fmtFecha(c.fecha_fin)}`
         : `Desde ${fmtFecha(c.fecha_inicio)}`;
 
       return `
-        <div class="cond-card ${!c.activa ? 'cond-card-inactiva' : ''} ${tienePromo ? 'cond-card-promo' : ''}">
-          <div class="cond-card-top">
-            <span class="cond-sabor-nombre">${escHtml(sabor)}</span>
-            ${catLabel ? `<span class="badge ${catBadge} cond-cat-badge">${catLabel}</span>` : ''}
-          </div>
-          <div class="cond-precio-area">
-            ${tienePromo ? `
-              <div class="cond-precio-original">${precioBase} €/L</div>
-              <div class="cond-precio-promo">${precioPromo} €/L</div>
-              <div class="cond-promo-pill">🎁 Promoción</div>
-            ` : `
-              <div class="cond-precio-normal">${precioBase} €/L</div>
-            `}
-          </div>
-          <div class="cond-card-footer">
-            <span class="cond-vigencia">${fechas}</span>
-            ${esAdmin ? `
-              <div class="cond-card-actions">
-                <button class="btn-cond-edit btn-edit-condicion" data-id="${c.id}" title="Editar">✏️</button>
-                <button class="btn-cond-toggle btn-toggle-condicion" data-id="${c.id}" data-activa="${c.activa}"
-                  title="${c.activa ? 'Desactivar' : 'Activar'}">${c.activa ? '🔴' : '🟢'}</button>
-              </div>` : ''}
-          </div>
-          ${c.notas_comerciales ? `<div class="cond-nota">💬 ${escHtml(c.notas_comerciales)}</div>` : ''}
-        </div>`;
+        <tr class="${!c.activa ? 'cond-fila-inactiva' : ''}">
+          <td class="cond-td-sabor">${escHtml(sabor)}</td>
+          <td>${catLabel ? `<span class="badge ${catBadge}" style="font-size:10px">${catLabel}</span>` : ''}</td>
+          <td class="cond-td-precio">
+            ${tienePromo
+              ? `<s class="cond-precio-tachado">${precioBase}</s> <strong class="cond-precio-promo-val">${precioPromo} €/L</strong>`
+              : `<strong>${precioBase} €/L</strong>`}
+          </td>
+          <td>${tienePromo ? '<span class="cond-promo-pill">🎁 Promo</span>' : '<span class="cond-sin-promo">—</span>'}</td>
+          <td class="cond-td-vigencia">${vigencia}</td>
+          ${esAdmin ? `
+          <td class="cond-td-acciones">
+            <button class="btn btn-sm btn-ghost btn-edit-condicion" data-id="${c.id}">✏️</button>
+            <button class="btn btn-sm btn-ghost btn-toggle-condicion" data-id="${c.id}" data-activa="${c.activa}"
+              title="${c.activa ? 'Desactivar' : 'Activar'}">${c.activa ? '🔴' : '🟢'}</button>
+          </td>` : '<td></td>'}
+        </tr>`;
     };
 
-    let html = '<div class="cond-grid">';
-    activas.forEach(c => { html += renderCard(c); });
-    html += '</div>';
+    let html = `
+      <table class="cond-tabla">
+        <thead>
+          <tr>
+            <th>Sabor</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Promoción</th>
+            <th>Vigencia</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${activas.map(renderFila).join('')}
+        </tbody>
+      </table>`;
 
     if (inactivas.length) {
-      html += `<div class="cond-inactivas-titulo">Tarifas inactivas (${inactivas.length})</div>`;
-      html += '<div class="cond-grid cond-grid-inactivas">';
-      inactivas.forEach(c => { html += renderCard(c); });
-      html += '</div>';
+      html += `
+        <div class="cond-inactivas-titulo">Tarifas inactivas (${inactivas.length})</div>
+        <table class="cond-tabla cond-tabla-inactivas">
+          <tbody>${inactivas.map(renderFila).join('')}</tbody>
+        </table>`;
     }
 
     el.innerHTML = html;
