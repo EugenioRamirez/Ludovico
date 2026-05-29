@@ -1,6 +1,6 @@
 // ── app.js · Router y controlador principal ──────────────────────────────────
 
-const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'db2b', 'clientes', 'sabores', 'condiciones', 'pedidos', 'proformas', 'facturas'];
+const SCREENS = ['dashboard', 'inventario', 'conteo', 'compras', 'calculadora', 'produccion', 'planificacion', 'db2b', 'clientes', 'sabores', 'condiciones', 'pedidos', 'proformas', 'facturas'];
 const TITLES  = {
   dashboard:    '🏠 Dashboard',
   inventario:   '📦 Inventario',
@@ -8,6 +8,7 @@ const TITLES  = {
   compras:      '🛒 Lista de Compras',
   calculadora:  '🧮 Calculadora de Recetas',
   produccion:   '🧊 Producción',
+  planificacion: '📅 Planificación de Producción',
   db2b:         '📊 Dashboard B2B',
   clientes:     '👥 Clientes B2B',
   sabores:      '🍨 Sabores B2B',
@@ -126,7 +127,8 @@ const App = {
       case 'conteo':      Conteo.load();      break;
       case 'compras':     Compras.load();     break;
       case 'calculadora': Calculadora.load(); break;
-      case 'produccion':  Produccion.load();  break;
+      case 'produccion':    Produccion.load();    break;
+      case 'planificacion': Planificacion.load(); break;
       case 'clientes':    Clientes.load();    break;
       case 'sabores':     Sabores.load();     break;
       case 'condiciones': Condiciones.load(); break;

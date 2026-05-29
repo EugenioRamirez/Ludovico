@@ -436,6 +436,96 @@ select {
 }
 .dash-all-ok-icon { font-size: 24px; }
 
+/* Dashboard cards (rediseño) */
+.dash-card { margin-bottom: 14px; }
+.dash-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; gap: 8px;
+}
+.dash-card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+
+/* Pills de stock */
+.dash-stock-pills { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dash-pill {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700;
+}
+.dash-pill-crit { background: #FFEBEE; color: #C62828; }
+.dash-pill-low  { background: #FFF8E1; color: #E65100; }
+.dash-pill-ok   { background: #E8F5E9; color: #2E7D32; }
+
+/* Botón ir a compras */
+.dash-compras-link {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; margin-top: 12px; padding: 11px 16px;
+  background: var(--cyan-light); border: 1.5px solid var(--cyan);
+  border-radius: 12px; cursor: pointer; font-family: 'Poppins', sans-serif;
+  font-size: 13px; font-weight: 700; color: var(--blue);
+  transition: background .2s;
+}
+.dash-compras-link:hover { background: var(--cyan); color: white; }
+.dash-compras-badge {
+  background: var(--orange); color: white; border-radius: 10px;
+  padding: 1px 7px; font-size: 11px; font-weight: 800;
+}
+.dash-compras-hint {
+  display: block; margin-top: 5px; font-size: 11px;
+  color: var(--text-muted); text-align: center;
+}
+
+/* Producción KPIs grid */
+.dash-prod-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+}
+.dash-prod-kpi {
+  border-radius: 12px; padding: 14px 10px 12px; text-align: center;
+  cursor: pointer; transition: transform .15s;
+}
+.dash-prod-kpi:active { transform: scale(0.97); }
+.dash-prod-kpi-warn   { background: #FFF8E1; border-bottom: 3px solid #FFB300; }
+.dash-prod-kpi-ok     { background: #E8F5E9; border-bottom: 3px solid #4CAF50; }
+.dash-prod-kpi-blue   { background: #E3F2FD; border-bottom: 3px solid var(--blue); }
+.dash-prod-kpi-purple { background: #F3E5F5; border-bottom: 3px solid #9C27B0; }
+.dash-prod-val {
+  font-size: 26px; font-weight: 800; line-height: 1.1; color: var(--text);
+}
+.dash-prod-kpi-warn   .dash-prod-val { color: #E65100; }
+.dash-prod-kpi-ok     .dash-prod-val { color: #2E7D32; }
+.dash-prod-kpi-blue   .dash-prod-val { color: var(--blue); }
+.dash-prod-kpi-purple .dash-prod-val { color: #7B1FA2; }
+.dash-prod-lbl {
+  font-size: 10px; font-weight: 600; color: var(--text-muted);
+  text-transform: uppercase; margin-top: 4px; letter-spacing: 0.3px;
+}
+
+/* Entregas B2B en dashboard */
+.dash-b2b-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border);
+}
+.dash-b2b-row:last-child { border-bottom: none; }
+.dash-b2b-cli {
+  flex: 1; min-width: 0; font-size: 13px; font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: flex; align-items: center; gap: 6px;
+}
+.dash-b2b-fecha {
+  font-size: 11px; color: var(--text-muted); font-weight: 600;
+  white-space: nowrap;
+}
+.dash-b2b-hoy {
+  background: var(--red); color: white; border-radius: 8px;
+  padding: 2px 8px; font-size: 11px; font-weight: 700; white-space: nowrap;
+}
+.dash-b2b-litros {
+  font-size: 12px; font-weight: 700; color: var(--blue);
+  background: var(--cyan-light); border-radius: 8px; padding: 2px 8px;
+  white-space: nowrap;
+}
+.dash-b2b-empty {
+  padding: 14px 0; font-size: 13px; color: var(--text-muted); text-align: center;
+}
+
 /* ══════════════════════════════════════════════════════════════
    INVENTARIO
    ══════════════════════════════════════════════════════════════ */
@@ -1272,3 +1362,119 @@ select {
 .prod-btn-danger  { width: 100%; padding: 10px; background: #b71c1c; color: #fff; border: none; border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
 .prod-btn-danger:hover    { background: #c62828; }
 .prod-btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ══════════════════════════════════════════════════════════════
+   PLANIFICACIÓN DE PRODUCCIÓN  (PROD-PLAN-001)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Barra de filtros */
+.plan-filtros-bar {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+}
+.plan-filtro {
+  padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+  background: white; font-size: 12px; font-weight: 600; cursor: pointer;
+  color: var(--text-muted); transition: all .15s; font-family: 'Poppins', sans-serif;
+}
+.plan-filtro:hover  { border-color: var(--cyan); color: var(--blue); }
+.plan-filtro.active { background: var(--blue); border-color: var(--blue); color: white; }
+
+/* Acordeón planificaciones */
+.plan-acord-left  { flex: 1; min-width: 0; }
+.plan-acord-nombre {
+  font-size: 13px; font-weight: 700; display: block;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.plan-acord-meta  { font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px; }
+.plan-acord-right { flex-shrink: 0; }
+
+/* Detalle planificación */
+.plan-detail-body { padding: 12px 0 4px; }
+.plan-obs {
+  font-size: 12px; color: var(--text-muted); background: var(--cyan-pale);
+  border-radius: 8px; padding: 8px 12px; margin-bottom: 12px;
+}
+.plan-sabores { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+
+.plan-linea-block {
+  background: var(--bg); border-radius: 10px; padding: 10px 12px;
+  border-left: 3px solid var(--cyan);
+}
+.plan-linea-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 6px;
+}
+.plan-linea-nombre { font-size: 13px; font-weight: 700; color: var(--text); }
+.plan-linea-meta   { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.plan-linea-error  {
+  padding: 8px 12px; background: #FFEBEE; border-radius: 8px;
+  font-size: 12px; color: #C62828;
+}
+
+/* Tabla ingredientes */
+.plan-ing-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.plan-ing-table td { padding: 3px 4px; border-bottom: 1px solid var(--border); }
+.plan-ing-table tr:last-child td { border-bottom: none; }
+.plan-ing-qty { text-align: right; font-weight: 600; color: var(--blue); white-space: nowrap; }
+.plan-ing-qty-total { color: var(--text); font-size: 13px; }
+.plan-ing-table.plan-ing-table-full { margin-top: 4px; }
+.plan-ing-table thead th {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  color: var(--text-muted); padding: 4px; border-bottom: 2px solid var(--border);
+}
+.plan-ing-table thead th.plan-ing-qty { text-align: right; }
+.plan-ing-table tfoot td {
+  border-top: 2px solid var(--border); padding-top: 6px; font-size: 13px;
+}
+
+/* Ingredientes consolidados */
+.plan-consolidated {
+  background: white; border-radius: 12px; padding: 12px;
+  box-shadow: var(--shadow); margin-bottom: 12px;
+}
+.plan-consolidated-title {
+  font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text);
+}
+
+/* Acciones del detalle */
+.plan-detail-actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding-top: 12px; border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.plan-cerrada-msg { font-size: 12px; color: var(--text-muted); padding: 6px 0; }
+.btn-danger-outline {
+  background: white; border: 1.5px solid var(--red); color: var(--red);
+  border-radius: 10px; padding: 7px 14px; font-size: 12px; font-weight: 700;
+  cursor: pointer; font-family: 'Poppins', sans-serif; transition: all .15s;
+}
+.btn-danger-outline:hover { background: var(--red); color: white; }
+.btn-secondary {
+  background: var(--cyan-light); border: 1.5px solid var(--cyan);
+  color: var(--blue); border-radius: 10px; padding: 7px 14px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: 'Poppins', sans-serif; transition: all .15s;
+}
+.btn-secondary:hover { background: var(--cyan); color: white; }
+
+/* Modal – filas de sabores */
+.plan-filas-section { margin-top: 14px; }
+.plan-filas-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.plan-filas-title { font-size: 13px; font-weight: 700; }
+.plan-fila {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.plan-fila-sabor { flex: 1; min-width: 0; }
+.plan-fila-litros { width: 80px; flex-shrink: 0; }
+.btn-plan-del-fila {
+  background: #FFEBEE; border: none; border-radius: 8px;
+  width: 30px; height: 30px; font-size: 13px; cursor: pointer;
+  color: #C62828; flex-shrink: 0; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-plan-del-fila:hover { background: var(--red); color: white; }

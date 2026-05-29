@@ -4,15 +4,26 @@ const Dashboard = {
 
   async load() {
     this.renderGreeting();
-    this.renderKPIs('–', '–', '–');
     document.getElementById('dash-last-conteo-txt').textContent = '…';
-    document.getElementById('dash-action-compras').textContent  = 'Lista de compras';
+
+    // Pills en estado cargando
+    ['crit','low','ok'].forEach(t => {
+      const el = document.getElementById(`dash-pill-${t}`);
+      el.textContent = '–';
+      el.classList.remove('hidden');
+    });
+
+    document.getElementById('alerts-list').innerHTML =
+      '<div class="spinner-wrap" style="padding:12px"><div class="spinner"></div></div>';
+    document.getElementById('dash-compras-btn').innerHTML = '';
+    document.getElementById('dash-b2b-entregas').innerHTML =
+      '<div class="spinner-wrap" style="padding:12px"><div class="spinner"></div></div>';
 
     await Promise.all([
       this.loadStock(),
-      this.loadComprasPendientes(),
       this.loadLastConteo(),
       this.loadProduccionKPIs(),
+      this.loadB2BEntregas(),
     ]);
   },
 
@@ -27,12 +38,6 @@ const Dashboard = {
       `${saludo}, ${nombre} 👋`;
     document.getElementById('dash-greeting-date').textContent =
       ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-  },
-
-  renderKPIs(ok, low, crit) {
-    document.getElementById('kpi-ok').querySelector('.kpi-val').textContent   = ok;
-    document.getElementById('kpi-low').querySelector('.kpi-val').textContent  = low;
-    document.getElementById('kpi-crit').querySelector('.kpi-val').textContent = crit;
   },
 
   async loadStock() {
@@ -60,8 +65,28 @@ const Dashboard = {
         }
       });
 
-      this.renderKPIs(ok, low, crit);
+      // Pills
+      const pillCrit = document.getElementById('dash-pill-crit');
+      const pillLow  = document.getElementById('dash-pill-low');
+      const pillOk   = document.getElementById('dash-pill-ok');
+
+      if (crit > 0) {
+        pillCrit.textContent = `❌ ${crit}`;
+        pillCrit.classList.remove('hidden');
+      } else {
+        pillCrit.classList.add('hidden');
+      }
+      if (low > 0) {
+        pillLow.textContent = `⚠️ ${low}`;
+        pillLow.classList.remove('hidden');
+      } else {
+        pillLow.classList.add('hidden');
+      }
+      pillOk.textContent = `✅ ${ok}`;
+      pillOk.classList.remove('hidden');
+
       this.renderAlertas(alertas);
+      this.renderComprasBtn(alertas.length);
 
     } catch (e) {
       console.error('Dashboard.loadStock:', e);
@@ -95,29 +120,48 @@ const Dashboard = {
               ${p.nivel === 'crit' ? '❌ Agotado' : '⚠️ Bajo'}
             </span>
             <div class="alert-item-info">
-              <span class="alert-name">${p.nombre}</span>
-              <span class="alert-sub">${cat}${prov}</span>
+              <span class="alert-name">${escHtml(p.nombre)}</span>
+              <span class="alert-sub">${escHtml(cat)}${escHtml(prov)}</span>
             </div>
           </div>
           <div class="alert-item-right">
             <span class="alert-stock">${fmtNum(p.stock_actual)} ${p.unidad}</span>
-            <button class="btn-alert-compra" data-id="${p.id}" data-nombre="${p.nombre}" data-unidad="${p.unidad}" title="Añadir a compras">
+            <button class="btn-alert-compra" data-id="${p.id}" data-nombre="${escHtml(p.nombre)}" data-unidad="${p.unidad}" title="Añadir a compras">
               🛒
             </button>
           </div>
         </div>`;
     }).join('');
 
-    // Botón añadir a compras directamente desde dashboard
     el.querySelectorAll('.btn-alert-compra').forEach(btn => {
       btn.addEventListener('click', () => this.addToCompras(btn.dataset));
     });
   },
 
+  renderComprasBtn(numAlertas) {
+    const el = document.getElementById('dash-compras-btn');
+    sb.from('lista_compra').select('id', { count: 'exact', head: true })
+      .eq('estado', 'pendiente')
+      .then(({ count }) => {
+        const n = count || 0;
+        const badge = n > 0 ? ` <span class="dash-compras-badge">${n}</span>` : '';
+        const extra = numAlertas > 0
+          ? `<span class="dash-compras-hint">Hay ${numAlertas} ingrediente${numAlertas > 1 ? 's' : ''} con alerta</span>`
+          : '';
+        el.innerHTML = `
+          <button class="dash-compras-link" onclick="App.nav('compras')">
+            🛒 Ir a lista de compras${badge}
+          </button>
+          ${extra}`;
+      })
+      .catch(() => {
+        el.innerHTML = `<button class="dash-compras-link" onclick="App.nav('compras')">🛒 Lista de compras</button>`;
+      });
+  },
+
   async addToCompras({ id, nombre, unidad }) {
     const empleada = Estado.getEmpleada();
     try {
-      // Comprobar si ya está pendiente
       const { data } = await sb
         .from('lista_compra')
         .select('id')
@@ -138,68 +182,38 @@ const Dashboard = {
       });
       if (error) throw error;
       showToast(`✓ "${nombre}" añadido a compras`, 'success');
-      this.loadComprasPendientes();
+      this.renderComprasBtn(0); // refresca el badge
     } catch (e) {
       showToast('Error al añadir', 'error');
     }
   },
 
-  async loadComprasPendientes() {
-    try {
-      const { data } = await sb
-        .from('lista_compra')
-        .select('id')
-        .eq('estado', 'pendiente');
-
-      const n   = data ? data.length : 0;
-      const txt = n > 0 ? `Lista de compras (${n})` : 'Lista de compras';
-      document.getElementById('dash-action-compras').textContent = txt;
-    } catch (e) { /* silencioso */ }
-  },
-
   async loadProduccionKPIs() {
     try {
-      const hoy  = new Date().toISOString().split('T')[0];
-      const hace7 = new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0];
+      const hoy   = new Date().toISOString().split('T')[0];
+      const hace7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      const [{ data: mixes }, { data: cremados }, { data: vitrina }, { data: ventas }] = await Promise.all([
-        sb.from('lotes_mix').select('litros, litros_cremados'),
-        sb.from('lotes_cremado').select('litros, litros_comercializados, fecha_cremado').lt('fecha_cremado', hoy),
-        sb.from('lotes_venta').select('litros_restantes').gt('litros_restantes', 0),
-        sb.from('lotes_venta').select('litros, litros_restantes').gte('fecha_comercializacion', hace7),
-      ]);
+      const [{ data: mixes }, { data: cremados }, { data: vitrina }, { data: ventas }] =
+        await Promise.all([
+          sb.from('lotes_mix').select('litros, litros_cremados'),
+          sb.from('lotes_cremado').select('litros, litros_comercializados, fecha_cremado').lt('fecha_cremado', hoy),
+          sb.from('lotes_venta').select('litros_restantes').gt('litros_restantes', 0),
+          sb.from('lotes_venta').select('litros, litros_restantes').gte('fecha_comercializacion', hace7),
+        ]);
 
-      // Mixes con litros pendientes
-      const nMixes = (mixes || []).filter(m => (m.litros - (m.litros_cremados||0)) > 0.001).length;
-
-      // Cremados listos para vender (fecha < hoy, con litros pendientes)
-      const nListos = (cremados || []).filter(c => (c.litros - (c.litros_comercializados||0)) > 0.001).length;
-
-      // Litros en comercialización
-      const lVitrina = (vitrina || []).reduce((s, v) => s + parseFloat(v.litros_restantes||0), 0).toFixed(1);
-
-      // Litros vendidos en 7 días
-      const lVendidos = (ventas || []).reduce((s, v) => s + parseFloat((v.litros||0) - (v.litros_restantes||0)), 0).toFixed(1);
+      const nMixes   = (mixes    || []).filter(m => (m.litros - (m.litros_cremados || 0)) > 0.001).length;
+      const nListos  = (cremados || []).filter(c => (c.litros - (c.litros_comercializados || 0)) > 0.001).length;
+      const lVitrina = (vitrina  || []).reduce((s, v) => s + parseFloat(v.litros_restantes || 0), 0).toFixed(1);
+      const lVendidos = (ventas  || []).reduce((s, v) => s + parseFloat((v.litros || 0) - (v.litros_restantes || 0)), 0).toFixed(1);
 
       document.getElementById('pkpi-mixes').textContent    = nMixes;
       document.getElementById('pkpi-listos').textContent   = nListos;
       document.getElementById('pkpi-vitrina').textContent  = lVitrina + 'L';
       document.getElementById('pkpi-vendidos').textContent = lVendidos + 'L';
 
-      // Sabores en comercialización
-      const saboresCont = document.getElementById('prod-dash-sabores');
-      if (vitrina && vitrina.length) {
-        const { data: sab } = await sb.from('lotes_venta').select('receta_nombre, litros_restantes').gt('litros_restantes', 0).order('receta_nombre');
-        if (sab && sab.length) {
-          saboresCont.innerHTML = sab.map(s =>
-            `<div class="prod-dash-sabor"><span>${s.receta_nombre}</span><span class="prod-dash-litros">${parseFloat(s.litros_restantes).toFixed(1)}L</span></div>`
-          ).join('');
-        }
-      } else {
-        saboresCont.innerHTML = '<div style="font-size:0.8rem;color:#888;padding:4px 0">Sin helados en comercialización</div>';
-      }
-
-    } catch(e) { console.error('loadProduccionKPIs:', e); }
+    } catch (e) {
+      console.error('loadProduccionKPIs:', e);
+    }
   },
 
   async loadLastConteo() {
@@ -223,5 +237,63 @@ const Dashboard = {
     } catch (e) {
       document.getElementById('dash-last-conteo-txt').textContent = '–';
     }
-  }
+  },
+
+  async loadB2BEntregas() {
+    const el = document.getElementById('dash-b2b-entregas');
+    try {
+      const hoy  = new Date().toISOString().split('T')[0];
+      const en7  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      const { data, error } = await sb
+        .from('pedidos_b2b')
+        .select('id, estado, fecha_entrega_prevista, litros_totales, clientes_b2b(nombre_comercial, razon_social)')
+        .gte('fecha_entrega_prevista', hoy)
+        .lte('fecha_entrega_prevista', en7)
+        .not('estado', 'in', '("cancelado","facturado")')
+        .order('fecha_entrega_prevista', { ascending: true })
+        .limit(10);
+
+      if (error) throw error;
+
+      if (!data || !data.length) {
+        el.innerHTML = '<div class="dash-b2b-empty">Sin entregas previstas esta semana</div>';
+        return;
+      }
+
+      const hoyDate = new Date(hoy);
+
+      el.innerHTML = data.map(p => {
+        const cli    = p.clientes_b2b;
+        const nombre = cli?.nombre_comercial || cli?.razon_social || '–';
+        const fecha  = new Date(p.fecha_entrega_prevista + 'T00:00:00');
+        const diffMs = fecha - hoyDate;
+        const diffD  = Math.round(diffMs / (24 * 60 * 60 * 1000));
+
+        let fechaLabel;
+        if (diffD === 0)      fechaLabel = '<span class="dash-b2b-hoy">Hoy</span>';
+        else if (diffD === 1) fechaLabel = '<span class="dash-b2b-hoy" style="background:#f59e0b">Mañana</span>';
+        else                  fechaLabel = `<span class="dash-b2b-fecha">${fecha.toLocaleDateString('es-ES', { weekday: 'short', day: '2-digit', month: 'short' })}</span>`;
+
+        const estadoBadge = p.estado === 'entregado'
+          ? '<span class="badge badge-ok" style="font-size:10px">entregado</span>'
+          : p.estado === 'incidencia'
+          ? '<span class="badge badge-crit" style="font-size:10px">incidencia</span>'
+          : '';
+
+        return `
+          <div class="dash-b2b-row">
+            <div class="dash-b2b-cli">${escHtml(nombre)} ${estadoBadge}</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+              ${fechaLabel}
+              <span class="dash-b2b-litros">${fmtNum(p.litros_totales || 0)}L</span>
+            </div>
+          </div>`;
+      }).join('');
+
+    } catch (e) {
+      console.error('loadB2BEntregas:', e);
+      el.innerHTML = '<div class="empty-msg error-msg">Error al cargar entregas</div>';
+    }
+  },
 };

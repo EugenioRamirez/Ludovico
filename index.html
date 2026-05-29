@@ -85,6 +85,15 @@
           </svg>
           <span>Producción</span>
         </button>
+        <button class="nav-item" data-screen="planificacion">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+            <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+          </svg>
+          <span>Planif.</span>
+        </button>
         <button class="nav-item" data-group="b2b">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -119,59 +128,55 @@
           </div>
         </div>
 
-        <!-- KPIs -->
-        <div class="kpi-grid">
-          <div class="kpi" id="kpi-ok">
-            <div class="kpi-icon">✅</div>
-            <div class="kpi-val">–</div>
-            <div class="kpi-lbl">En stock</div>
+        <!-- Sección 1: Ingredientes con alertas -->
+        <div class="card dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">🛒 Ingredientes</span>
+            <div class="dash-stock-pills">
+              <span id="dash-pill-crit" class="dash-pill dash-pill-crit hidden"></span>
+              <span id="dash-pill-low"  class="dash-pill dash-pill-low  hidden"></span>
+              <span id="dash-pill-ok"   class="dash-pill dash-pill-ok   hidden"></span>
+            </div>
           </div>
-          <div class="kpi" id="kpi-low">
-            <div class="kpi-icon">⚠️</div>
-            <div class="kpi-val">–</div>
-            <div class="kpi-lbl">Stock bajo</div>
+          <div id="alerts-list"></div>
+          <div id="dash-compras-btn"></div>
+        </div>
+
+        <!-- Sección 2: Producción -->
+        <div class="card dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">🧊 Producción</span>
+            <button class="btn btn-sm btn-ghost" onclick="App.nav('produccion')">Ver todo →</button>
           </div>
-          <div class="kpi" id="kpi-crit">
-            <div class="kpi-icon">🚨</div>
-            <div class="kpi-val">–</div>
-            <div class="kpi-lbl">Crítico</div>
+          <div class="dash-prod-grid">
+            <div class="dash-prod-kpi dash-prod-kpi-warn" onclick="App.nav('produccion')">
+              <div class="dash-prod-val" id="pkpi-mixes">–</div>
+              <div class="dash-prod-lbl">Mixes pendientes</div>
+            </div>
+            <div class="dash-prod-kpi dash-prod-kpi-ok" onclick="App.nav('produccion')">
+              <div class="dash-prod-val" id="pkpi-listos">–</div>
+              <div class="dash-prod-lbl">Listos para vender</div>
+            </div>
+            <div class="dash-prod-kpi dash-prod-kpi-blue" onclick="App.nav('produccion')">
+              <div class="dash-prod-val" id="pkpi-vitrina">–</div>
+              <div class="dash-prod-lbl">En tienda</div>
+            </div>
+            <div class="dash-prod-kpi dash-prod-kpi-purple" onclick="App.nav('produccion')">
+              <div class="dash-prod-val" id="pkpi-vendidos">–</div>
+              <div class="dash-prod-lbl">Vendidos 7 días</div>
+            </div>
           </div>
         </div>
 
-        <!-- Acciones rápidas -->
-        <div class="dash-actions">
-          <button class="dash-action-btn" onclick="App.nav('conteo')">
-            <span class="dash-action-icon">📋</span>
-            <span>Conteo semanal</span>
-          </button>
-          <button class="dash-action-btn" onclick="App.nav('compras')">
-            <span class="dash-action-icon">🛒</span>
-            <span id="dash-action-compras">Lista de compras</span>
-          </button>
-          <button class="dash-action-btn" onclick="App.nav('inventario')">
-            <span class="dash-action-icon">📦</span>
-            <span>Ver inventario</span>
-          </button>
-          <button class="dash-action-btn" onclick="App.nav('calculadora')">
-            <span class="dash-action-icon">🧮</span>
-            <span>Calculadora</span>
-          </button>
-          <button class="dash-action-btn" onclick="App.nav('produccion')">
-            <span class="dash-action-icon">🧊</span>
-            <span>Producción</span>
-          </button>
-        </div>
-
-        <!-- KPIs Producción -->
-        <div class="card" id="card-produccion-dash">
-          <h3 class="card-title">🧊 Producción</h3>
-          <div class="prod-kpi-grid" id="prod-kpi-grid">
-            <div class="prod-kpi"><div class="prod-kpi-val" id="pkpi-mixes">–</div><div class="prod-kpi-lbl">Mixes pendientes</div></div>
-            <div class="prod-kpi"><div class="prod-kpi-val" id="pkpi-listos">–</div><div class="prod-kpi-lbl">Listos para vender</div></div>
-            <div class="prod-kpi"><div class="prod-kpi-val" id="pkpi-vitrina">–</div><div class="prod-kpi-lbl">En comercialización</div></div>
-            <div class="prod-kpi"><div class="prod-kpi-val" id="pkpi-vendidos">–</div><div class="prod-kpi-lbl">Vendidos (7 días)</div></div>
+        <!-- Sección 3: Entregas B2B esta semana -->
+        <div class="card dash-card" id="dash-b2b-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">🚚 Entregas B2B — esta semana</span>
+            <button class="btn btn-sm btn-ghost" onclick="App.nav('db2b')">Dashboard B2B →</button>
           </div>
-          <div id="prod-dash-sabores" style="margin-top:10px"></div>
+          <div id="dash-b2b-entregas">
+            <div class="spinner-wrap" style="padding:12px"><div class="spinner"></div></div>
+          </div>
         </div>
 
       </section>
@@ -396,9 +401,84 @@
         <button class="fab" id="fab-add-compra" title="Añadir a la lista">＋</button>
       </section>
 
+      <!-- ── Planificación de Producción ──────────────── -->
+      <section id="screen-planificacion" class="screen">
+
+        <!-- Filtros de estado -->
+        <div class="plan-filtros-bar">
+          <button class="plan-filtro active" data-estado="todos">Todos</button>
+          <button class="plan-filtro" data-estado="borrador">✏️ Borrador</button>
+          <button class="plan-filtro" data-estado="calculada">🧮 Calculada</button>
+          <button class="plan-filtro" data-estado="cerrada">🔒 Cerrada</button>
+        </div>
+
+        <!-- Lista acordeón -->
+        <div id="plan-list">
+          <div class="spinner-wrap"><div class="spinner"></div></div>
+        </div>
+
+        <!-- FAB nueva planificación -->
+        <button class="fab" id="fab-nueva-plan" title="Nueva planificación"
+          onclick="Planificacion.abrirModalNueva()">＋</button>
+
+      </section>
+
     </main><!-- /main-content -->
 
   </div><!-- /app-layout -->
+
+  <!-- ══════════════════════════════════════════════
+       MODAL · Planificación de producción
+  ══════════════════════════════════════════════ -->
+  <div class="modal-overlay hidden" id="modal-plan-overlay">
+    <div class="modal" style="max-width:520px">
+      <div class="modal-header">
+        <h2 id="plan-modal-titulo">Nueva planificación</h2>
+        <button class="modal-close" onclick="closeModal('modal-plan-overlay')">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Cabecera -->
+        <div class="form-group">
+          <label>Nombre de la planificación <span class="lbl-opt">(opcional)</span></label>
+          <input type="text" id="plan-modal-nombre" placeholder="Ej: Semana 23 - Verano">
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Fecha planificación <span class="req">*</span></label>
+            <input type="date" id="plan-modal-fecha">
+          </div>
+          <div class="form-group">
+            <label>Fecha objetivo producción <span class="lbl-opt">(opc.)</span></label>
+            <input type="date" id="plan-modal-fecha-obj">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Observaciones <span class="lbl-opt">(opcional)</span></label>
+          <textarea id="plan-modal-obs" rows="2" placeholder="Notas internas…"></textarea>
+        </div>
+
+        <!-- Líneas de sabores -->
+        <div class="plan-filas-section">
+          <div class="plan-filas-header">
+            <span class="plan-filas-title">🍨 Sabores a producir</span>
+            <button type="button" class="btn btn-sm btn-ghost"
+              onclick="Planificacion._agregarFila()">＋ Añadir sabor</button>
+          </div>
+          <div id="plan-filas-body"></div>
+        </div>
+
+        <!-- Error -->
+        <div class="form-error" id="plan-modal-error"></div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modal-plan-overlay')">Cancelar</button>
+        <button class="btn btn-primary" id="plan-btn-guardar"
+          onclick="Planificacion.guardar()">💾 Guardar planificación</button>
+      </div>
+    </div>
+  </div>
 
 
   <!-- ══════════════════════════════════════════════
@@ -1123,6 +1203,7 @@
   <script src="js/conteo.js"></script>
   <script src="js/compras.js"></script>
   <script src="js/calculadora.js"></script>
+  <script src="js/planificacion.js"></script>
   <script src="js/produccion.js"></script>
   <script src="js/condiciones.js"></script>
   <script src="js/sabores.js"></script>
