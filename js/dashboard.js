@@ -6,16 +6,6 @@ const Dashboard = {
     this.renderGreeting();
     document.getElementById('dash-last-conteo-txt').textContent = '…';
 
-    // Pills en estado cargando
-    ['crit','low','ok'].forEach(t => {
-      const el = document.getElementById(`dash-pill-${t}`);
-      el.textContent = '–';
-      el.classList.remove('hidden');
-    });
-
-    document.getElementById('alerts-list').innerHTML =
-      '<div class="spinner-wrap" style="padding:12px"><div class="spinner"></div></div>';
-    document.getElementById('dash-compras-btn').innerHTML = '';
     document.getElementById('dash-b2b-entregas').innerHTML =
       '<div class="spinner-wrap" style="padding:12px"><div class="spinner"></div></div>';
     ['bkpi-pedact', 'bkpi-enthoy', 'bkpi-incid', 'bkpi-facmes'].forEach(id => {
@@ -23,7 +13,6 @@ const Dashboard = {
     });
 
     await Promise.all([
-      this.loadStock(),
       this.loadLastConteo(),
       this.loadProduccionKPIs(),
       this.loadB2BKPIs(),
