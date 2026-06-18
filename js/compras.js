@@ -67,7 +67,10 @@ const Compras = {
   },
 
   filtered() {
-    if (this.filtro === 'all') return this.items;
+    // "Todos" no incluye los ya recibidos: una vez recibido, no tiene sentido
+    // seguir viéndolo mezclado con lo pendiente/pedido. Sigue disponible en
+    // la pestaña "Recibido" como histórico.
+    if (this.filtro === 'all') return this.items.filter(i => i.estado !== 'recibido');
     return this.items.filter(i => i.estado === this.filtro);
   },
 
