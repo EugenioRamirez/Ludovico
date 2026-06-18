@@ -53,6 +53,11 @@ const DashboardB2B = {
       const ACTIVOS  = ['pendiente', 'confirmado', 'preparando', 'incidencia'];
       const PENDPF   = ['borrador', 'revisada', 'enviada', 'aprobada'];
 
+      // Rango del mes actual, para las KPIs de litros/facturación servidos
+      const mesIniIso = `${anio}-${String(mes).padStart(2, '0')}-01`;
+      const mesFinDia  = new Date(anio, mes, 0).getDate(); // último día del mes
+      const mesFinIso  = `${anio}-${String(mes).padStart(2, '0')}-${String(mesFinDia).padStart(2, '0')}`;
+
       const [
         rPedPend,
         rPedHoy,
@@ -64,7 +69,6 @@ const DashboardB2B = {
         rPedOper,
         rEntregas,
         rPfEstados,
-        rIncid,
         rActPed,
         rActPf,
         rActFact,
@@ -97,15 +101,18 @@ const DashboardB2B = {
         sb.from('clientes_b2b').select('id', { count: 'exact', head: true })
           .eq('activo', true),
 
-        // KPI 7+8: litros y facturación mes actual (todas las proformas del período, sin excluir estado)
-        sb.from('proformas_b2b')
-          .select('total_litros, total_final')
-          .eq('periodo_mes', mes)
-          .eq('periodo_anio', anio),
+        // KPI 7+8: litros servidos al cliente y su importe este mes — pedidos ya
+        // entregados (o entregados y después facturados), según fecha de entrega
+        // prevista. Independiente de si hay proforma/factura emitida o no.
+        sb.from('pedidos_b2b')
+          .select('total_litros, total_importe')
+          .in('estado', ['entregado', 'facturado'])
+          .gte('fecha_entrega_prevista', mesIniIso)
+          .lte('fecha_entrega_prevista', mesFinIso),
 
         // Panel pedidos operativos (últimos 30 activos, ordenados por fecha entrega)
         sb.from('pedidos_b2b')
-          .select(`id, numero_pedido, estado, fecha_entrega_prevista,
+          .select(`id, estado, fecha_entrega_prevista,
                    total_litros, observaciones,
                    clientes_b2b(id, nombre_comercial, razon_social)`)
           .in('estado', ACTIVOS)
@@ -114,7 +121,7 @@ const DashboardB2B = {
 
         // Panel entregas próximas (hoy → +7 días)
         sb.from('pedidos_b2b')
-          .select(`id, numero_pedido, estado, fecha_entrega_prevista,
+          .select(`id, estado, fecha_entrega_prevista,
                    total_litros, observaciones,
                    clientes_b2b(id, nombre_comercial, razon_social)`)
           .in('estado', ['pendiente', 'confirmado', 'preparando', 'entregado', 'incidencia'])
@@ -131,24 +138,17 @@ const DashboardB2B = {
           .order('periodo_mes',  { ascending: false })
           .limit(20),
 
-        // Incidencias: pedidos en estado incidencia + vencidos
+        // Actividad reciente: pedidos (por última modificación, así un cambio de
+        // estado reciente — p.ej. a "entregado" — sube al feed)
         sb.from('pedidos_b2b')
-          .select(`id, numero_pedido, estado, fecha_entrega_prevista,
-                   observaciones, clientes_b2b(nombre_comercial, razon_social)`)
-          .or(`estado.eq.incidencia,and(estado.in.(pendiente,confirmado,preparando),fecha_entrega_prevista.lt.${hoy})`)
-          .order('fecha_entrega_prevista', { ascending: true })
-          .limit(20),
-
-        // Actividad reciente: pedidos
-        sb.from('pedidos_b2b')
-          .select('id, numero_pedido, estado, created_at, modificado_por, clientes_b2b(nombre_comercial, razon_social)')
-          .order('created_at', { ascending: false })
+          .select('id, estado, created_at, updated_at, modificado_por, clientes_b2b(nombre_comercial, razon_social)')
+          .order('updated_at', { ascending: false })
           .limit(8),
 
-        // Actividad reciente: proformas
+        // Actividad reciente: proformas (idem, por updated_at)
         sb.from('proformas_b2b')
-          .select('id, estado, periodo_mes, periodo_anio, created_at, modificado_por, clientes_b2b(nombre_comercial, razon_social)')
-          .order('created_at', { ascending: false })
+          .select('id, estado, periodo_mes, periodo_anio, created_at, updated_at, modificado_por, clientes_b2b(nombre_comercial, razon_social)')
+          .order('updated_at', { ascending: false })
           .limit(5),
 
         // Actividad reciente: facturas
@@ -158,10 +158,10 @@ const DashboardB2B = {
           .limit(5),
       ]);
 
-      // Calcular KPIs de mes
+      // Calcular KPIs de mes (litros servidos y su importe, ya entregados)
       const kpiMesDatos = rKpiMes.data || [];
       const litrosMes   = kpiMesDatos.reduce((s, p) => s + parseFloat(p.total_litros || 0), 0);
-      const facturMes   = kpiMesDatos.reduce((s, p) => s + parseFloat(p.total_final || 0), 0);
+      const facturMes   = kpiMesDatos.reduce((s, p) => s + parseFloat(p.total_importe || 0), 0);
 
       this._render({
         kpis: {
@@ -178,7 +178,6 @@ const DashboardB2B = {
         pedOper:    rPedOper.data   || [],
         entregas:   rEntregas.data  || [],
         pfEstados:  rPfEstados.data || [],
-        incid:      rIncid.data     || [],
         actividad:  this._mergeActividad(
                       rActPed.data  || [],
                       rActPf.data   || [],
@@ -213,8 +212,8 @@ const DashboardB2B = {
         ${this._kpiCard('📋', 'Albaranes sin proforma',kpis.albSinPf,'',        kpis.albSinPf > 0 ? 'kpi-warn' : 'kpi-ok',  'proformas')}
         ${this._kpiCard('🧾', 'Proformas pendientes',  kpis.pfPend,   '',       kpis.pfPend   > 0 ? 'kpi-info' : 'kpi-ok',  'proformas')}
         ${this._kpiCard('👥', 'Clientes activos',      kpis.cliActivos,'',      'kpi-blue',                                  'clientes')}
-        ${this._kpiCard('🧊', `Litros ${mesLabel}`,    kpis.litrosMes.toFixed(0), 'L', 'kpi-blue', 'proformas')}
-        ${this._kpiCard('💶', `Facturación ${mesLabel}`,kpis.facturMes.toFixed(2),'€','kpi-green', 'facturas')}
+        ${this._kpiCard('🧊', `Litros servidos ${mesLabel}`,    kpis.litrosMes.toFixed(0), 'L', 'kpi-blue', 'pedidos')}
+        ${this._kpiCard('💶', `Facturación ${mesLabel}`,kpis.facturMes.toFixed(2),'€','kpi-green', 'pedidos')}
       </div>
 
       <!-- ── Panels grid ── -->
@@ -250,17 +249,6 @@ const DashboardB2B = {
           </div>
           <div class="db2b-panel-body">
             ${this._renderFact(d.pfEstados)}
-          </div>
-        </div>
-
-        <!-- Incidencias -->
-        <div class="db2b-panel ${d.incid.length ? 'db2b-panel-alert' : ''}">
-          <div class="db2b-panel-header">
-            <span>⚠️ Incidencias operativas</span>
-            <span class="db2b-incid-count ${d.incid.length ? 'has-incid' : ''}">${d.incid.length}</span>
-          </div>
-          <div class="db2b-panel-body">
-            ${this._renderIncid(d.incid)}
           </div>
         </div>
 
@@ -406,43 +394,29 @@ const DashboardB2B = {
     return html;
   },
 
-  // ── Panel: Incidencias ──────────────────────────────────────────────────────
-
-  _renderIncid(items) {
-    if (!items.length) return '<p class="db2b-empty">✅ Sin incidencias operativas</p>';
-
-    const hoy = this._hoy;
-
-    return items.map(p => {
-      const cli    = p.clientes_b2b;
-      const nombre = cli?.nombre_comercial || cli?.razon_social || '–';
-      const vence  = p.fecha_entrega_prevista;
-      const tarde  = vence && vence < hoy;
-      const tipo   = p.estado === 'incidencia'
-        ? '⚠️ Incidencia declarada'
-        : `🕐 Retraso (previsto ${fmtFecha(vence)})`;
-
-      return `
-      <div class="db2b-incid-row" onclick="App.nav('pedidos')">
-        <div class="db2b-incid-tipo">${tipo}</div>
-        <div class="db2b-incid-cli">${escHtml(nombre)}</div>
-        ${p.observaciones ? `<div class="db2b-incid-obs">${escHtml(p.observaciones)}</div>` : ''}
-      </div>`;
-    }).join('');
-  },
-
   // ── Actividad reciente ──────────────────────────────────────────────────────
 
   _mergeActividad(peds, pfs, facts) {
     const eventos = [];
 
+    const PED_EVENTO = {
+      pendiente:  { icon: '📦', texto: 'Pedido recibido' },
+      confirmado: { icon: '✅', texto: 'Pedido confirmado' },
+      preparando: { icon: '🧊', texto: 'Pedido en elaboración' },
+      entregado:  { icon: '🚚', texto: 'Pedido entregado' },
+      incidencia: { icon: '⚠️', texto: 'Incidencia en pedido' },
+      cancelado:  { icon: '❌', texto: 'Pedido cancelado' },
+      facturado:  { icon: '🧾', texto: 'Pedido facturado' },
+    };
+
     peds.forEach(p => {
       const cli = p.clientes_b2b;
+      const ev  = PED_EVENTO[p.estado] || { icon: '📦', texto: 'Pedido' };
       eventos.push({
-        ts:     p.created_at,
-        icon:   '📦',
-        texto:  `Pedido ${p.numero_pedido || p.id.slice(0,6).toUpperCase()} — ${cli?.nombre_comercial || cli?.razon_social || '–'}`,
-        sub:    `Estado: ${p.estado}`,
+        ts:     p.updated_at || p.created_at,
+        icon:   ev.icon,
+        texto:  `${ev.texto} — ${cli?.nombre_comercial || cli?.razon_social || '–'}`,
+        sub:    `Pedido ${p.id.slice(0,6).toUpperCase()}`,
         nav:    'pedidos',
         user:   p.modificado_por || '',
       });
@@ -451,12 +425,19 @@ const DashboardB2B = {
     pfs.forEach(p => {
       const cli    = p.clientes_b2b;
       const MESES  = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-      const ICONS  = { borrador:'📝', revisada:'👁️', enviada:'📤', aprobada:'✅', facturada:'🧾' };
+      const PF_EVENTO = {
+        borrador:  { icon: '📝', texto: 'Proforma creada' },
+        revisada:  { icon: '👁️', texto: 'Proforma revisada' },
+        enviada:   { icon: '📤', texto: 'Proforma emitida' },
+        aprobada:  { icon: '✅', texto: 'Proforma aprobada' },
+        facturada: { icon: '🧾', texto: 'Proforma facturada' },
+      };
+      const ev = PF_EVENTO[p.estado] || { icon: '📋', texto: 'Proforma' };
       eventos.push({
-        ts:     p.created_at,
-        icon:   ICONS[p.estado] || '📋',
-        texto:  `Proforma ${MESES[p.periodo_mes]} ${p.periodo_anio} — ${cli?.nombre_comercial || cli?.razon_social || '–'}`,
-        sub:    `Estado: ${p.estado}`,
+        ts:     p.updated_at || p.created_at,
+        icon:   ev.icon,
+        texto:  `${ev.texto} — ${cli?.nombre_comercial || cli?.razon_social || '–'}`,
+        sub:    `${MESES[p.periodo_mes]} ${p.periodo_anio}`,
         nav:    'proformas',
         user:   p.modificado_por || '',
       });

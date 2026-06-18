@@ -1089,6 +1089,9 @@ select {
   padding: 12px;
 }
 @media (max-width: 640px) { .db2b-panels { grid-template-columns: 1fr; } }
+/* Con la Incidencias operativas eliminada quedan 3 paneles: que el último
+   (Facturación pendiente) ocupe el ancho completo en vez de dejar un hueco. */
+.db2b-panels .db2b-panel:nth-child(3) { grid-column: 1 / -1; }
 
 .db2b-panel {
   background: white;
