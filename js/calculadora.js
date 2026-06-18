@@ -5,9 +5,9 @@ const BASE_LITROS = 2.5;   // litros base por defecto (recetas sin litros_base)
 const RECETAS = [
   // ── Chocolates & Cacao ─────────────────────────────────────────────────────
   { categoria:"Chocolates & Cacao", nombre:"Helado de Chocolate con Leche",
-    total:1511, ingredientes:[["Leche entera",1000],["Azúcar",160],["Dextrosa",40],["Glicerina",50],["Base Pro Crema",100],["Cacao amargo",200],["Sal",1]]},
+    total:1531, ingredientes:[["Leche entera",1000],["Azúcar",160],["Dextrosa",60],["Glicerina",10],["Base Pro Crema",100],["Cacao amargo",200],["Sal",1]]},
   { categoria:"Chocolates & Cacao", nombre:"Helado de Chocolate Blanco",
-    total:1151, ingredientes:[["Leche entera",650],["Base Pro Crema",100],["Cobertura blanca",350],["Glicerina",50],["Sal",1]]},
+    total:1201, ingredientes:[["Leche entera",650],["Base Pro Crema",100],["Cobertura blanca",350],["Azúcar",100],["Sal",1]]},
   { categoria:"Chocolates & Cacao", nombre:"Helado de Gianduja",
     subtitle:"Chocolate con Avellana",
     total:1341, ingredientes:[["Leche entera",840],["Azúcar",120],["Dextrosa",60],["Base Pro Crema",100],["Cacao amargo",60],["Pasta de avellana",160],["Sal",1]]},
@@ -17,18 +17,16 @@ const RECETAS = [
 
   // ── Frutos Secos & Pralinés ────────────────────────────────────────────────
   { categoria:"Frutos Secos & Pralinés", nombre:"Helado de Pistacho",
-    total:1231, ingredientes:[["Leche entera",750],["Azúcar",100],["Base Pro Crema",100],["Glicerina",30],["Pasta de pistacho",250],["Sal",1]]},
+    total:1216, ingredientes:[["Leche entera",750],["Azúcar",100],["Base Pro Crema",100],["Glicerina",15],["Pasta de pistacho",250],["Sal",1]]},
   { categoria:"Frutos Secos & Pralinés", nombre:"Helado de Avellana",
     total:1281, ingredientes:[["Leche entera",725],["Azúcar",50],["Dextrosa",20],["Base Pro Crema",100],["Glicerina",30],["Pasta de avellana",275],["Sal",1]]},
-  { categoria:"Frutos Secos & Pralinés", nombre:"Helado de Nueces",
-    total:1321, ingredientes:[["Leche entera",850],["Azúcar",220],["Base Pro Crema",100],["Pasta de nuez 100%",150],["Sal",1]]},
   { categoria:"Frutos Secos & Pralinés", nombre:"Helado de Turrón",
     total:1221, ingredientes:[["Leche entera",700],["Base Pro Crema",100],["Dextrosa",50],["Glicerina",20],["Pasta de turrón",300]]},
 
   // ── Helados Clásicos ───────────────────────────────────────────────────────
   { categoria:"Helados Clásicos", nombre:"Helado Stracciatella",
     subtitle:"Base láctea para Stracciatella",
-    total:945, ingredientes:[["Leche entera",584],["Nata 35%",166],["Azúcar",65],["Dextrosa",63],["Leche en polvo 1%",30],["Glucosa",23],["Maltodextrina",10],["Profiber",4]]},
+    total:1460, ingredientes:[["Leche entera",1000],["Nata 35%",120],["Azúcar",190],["Leche en polvo 1%",20],["Base Pro Crema",100],["Pasta Crema Nata",30]]},
   { categoria:"Helados Clásicos", nombre:"Helado de Vainilla",
     subtitle:"Con Yema de Huevo",
     total:1310, ingredientes:[["Leche entera",700],["Azúcar",140],["Dextrosa",50],["Glicerina",20],["Base Pro Crema",80],["Nata 35%",150],["Yema de huevo",150],["Extracto natural de vainilla",20],["Sal",1]]},
@@ -72,22 +70,20 @@ const RECETAS = [
 
   // ── Especiales & Gourmets ──────────────────────────────────────────────────
   { categoria:"Especiales & Gourmets", nombre:"Helado de Café",
-    total:1341, ingredientes:[["Leche entera",900],["Azúcar",120],["Dextrosa",40],["Base Pro Crema",100],["Nata 35%",100],["Glicerina",30],["Pasta café / Nescafé",50],["Sal",1]]},
-  { categoria:"Especiales & Gourmets", nombre:"Helado de Regaliz Negro",
-    total:1590, ingredientes:[["Leche entera",1000],["Azúcar",150],["Dextrosa",70],["Base Pro Crema",100],["Glicerina",20],["Nata 35%",200],["Pasta regaliz negro",50],["Sal",1]]},
+    total:1341, ingredientes:[["Leche entera",900],["Azúcar",160],["Dextrosa",30],["Base Pro Crema",100],["Nata 35%",100],["Pasta café / Nescafé",50],["Sal",1]]},
   { categoria:"Especiales & Gourmets", nombre:"Helado de Violetas",
-    total:1495, ingredientes:[["Leche entera",1000],["Azúcar",275],["Base Pro Crema",100],["Glicerina",40],["Pétalos de violetas",20],["Extracto natural de violeta",60]]},
+    total:1475, ingredientes:[["Leche entera",1000],["Azúcar",275],["Base Pro Crema",100],["Glicerina",20],["Pétalos de violetas",20],["Extracto natural de violeta",60]]},
   { categoria:"Especiales & Gourmets", nombre:"Helado de Queso Cabrales",
-    total:1335, ingredientes:[["Leche entera",800],["Azúcar",75],["Dextrosa",100],["Base Pro Crema",80],["Queso de leche",200],["Queso Cabrales suave",80]]},
+    total:1335, ingredientes:[["Leche entera",800],["Azúcar",125],["Dextrosa",50],["Base Pro Crema",80],["Queso de leche",200],["Queso Cabrales suave",80]]},
   { categoria:"Especiales & Gourmets", nombre:"Helado de Pasa al Ron",
     nota:"Velocidad lenta para escurrir al Ron.",
-    total:null, ingredientes:[["Leche entera",1000],["Azúcar",200],["Dextrosa",50],["Base Pro Crema",92],["Nata 35%",150],["Pasta Málaga suave",80]]},
+    total:null, ingredientes:[["Leche entera",1000],["Azúcar",230],["Dextrosa",20],["Base Pro Crema",92],["Nata 35%",150],["Pasta Málaga suave",80]]},
   { categoria:"Especiales & Gourmets", nombre:"Helado de AOVE",
     litros_base:5, total:4752,
     ingredientes:[["Agua",3000],["Azúcar",750],["Profiber",35],["Leche en polvo",464],["Dextrosa",124],["Azúcar invertido",124],["AOVE",250],["Sal",5]]},
   { categoria:"Especiales & Gourmets", nombre:"Helado de Matcha",
-    litros_base:1, total:1229,
-    ingredientes:[["Leche entera",750],["Nata 35%",200],["Azúcar",100],["Base Pro Crema",125],["Matcha",28],["Dextrosa",25],["Sal",1]]},
+    litros_base:1, total:1129,
+    ingredientes:[["Leche entera",750],["Nata 35%",100],["Azúcar",100],["Base Pro Crema",125],["Matcha",28],["Dextrosa",25],["Sal",1]]},
 
   // ── Granizados & Bebidas ───────────────────────────────────────────────────
   { categoria:"Granizados & Bebidas", nombre:"Granizado de Limón",
