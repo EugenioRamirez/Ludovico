@@ -18,11 +18,15 @@ const Dashboard = {
     document.getElementById('dash-compras-btn').innerHTML = '';
     document.getElementById('dash-b2b-entregas').innerHTML =
       '<div class="spinner-wrap" style="padding:12px"><div class="spinner"></div></div>';
+    ['bkpi-pedact', 'bkpi-enthoy', 'bkpi-incid', 'bkpi-facmes'].forEach(id => {
+      document.getElementById(id).textContent = '–';
+    });
 
     await Promise.all([
       this.loadStock(),
       this.loadLastConteo(),
       this.loadProduccionKPIs(),
+      this.loadB2BKPIs(),
       this.loadB2BEntregas(),
     ]);
   },
@@ -239,6 +243,46 @@ const Dashboard = {
     }
   },
 
+  async loadB2BKPIs() {
+    try {
+      const hoy   = new Date().toISOString().split('T')[0];
+      const ahora = new Date();
+      const mes   = ahora.getMonth() + 1;
+      const anio  = ahora.getFullYear();
+      const ACTIVOS = ['pendiente', 'confirmado', 'preparando', 'incidencia'];
+
+      const [rPedAct, rEntHoy, rIncid, rFactMes] = await Promise.all([
+        sb.from('pedidos_b2b').select('id', { count: 'exact', head: true })
+          .in('estado', ACTIVOS),
+        sb.from('pedidos_b2b').select('id', { count: 'exact', head: true })
+          .in('estado', ACTIVOS).eq('fecha_entrega_prevista', hoy),
+        sb.from('pedidos_b2b').select('id', { count: 'exact', head: true })
+          .or(`estado.eq.incidencia,and(estado.in.(pendiente,confirmado,preparando),fecha_entrega_prevista.lt.${hoy})`),
+        sb.from('proformas_b2b').select('total_final')
+          .eq('periodo_mes', mes).eq('periodo_anio', anio),
+      ]);
+
+      const nIncid    = rIncid.count || 0;
+      const facturMes = (rFactMes.data || [])
+        .reduce((s, p) => s + parseFloat(p.total_final || 0), 0);
+
+      document.getElementById('bkpi-pedact').textContent = rPedAct.count || 0;
+      document.getElementById('bkpi-enthoy').textContent = rEntHoy.count || 0;
+      document.getElementById('bkpi-incid').textContent  = nIncid;
+      document.getElementById('bkpi-facmes').textContent = Math.round(facturMes).toLocaleString('es-ES') + '€';
+
+      const incidCard = document.getElementById('bkpi-incid-card');
+      incidCard.classList.toggle('dash-prod-kpi-crit', nIncid > 0);
+      incidCard.classList.toggle('dash-prod-kpi-ok', nIncid === 0);
+
+    } catch (e) {
+      console.error('loadB2BKPIs:', e);
+      ['bkpi-pedact', 'bkpi-enthoy', 'bkpi-incid', 'bkpi-facmes'].forEach(id => {
+        document.getElementById(id).textContent = '–';
+      });
+    }
+  },
+
   async loadB2BEntregas() {
     const el = document.getElementById('dash-b2b-entregas');
     try {
@@ -247,7 +291,7 @@ const Dashboard = {
 
       const { data, error } = await sb
         .from('pedidos_b2b')
-        .select('id, estado, fecha_entrega_prevista, litros_totales, clientes_b2b(nombre_comercial, razon_social)')
+        .select('id, estado, fecha_entrega_prevista, total_litros, clientes_b2b(nombre_comercial, razon_social)')
         .gte('fecha_entrega_prevista', hoy)
         .lte('fecha_entrega_prevista', en7)
         .not('estado', 'in', '("cancelado","facturado")')
@@ -286,7 +330,7 @@ const Dashboard = {
             <div class="dash-b2b-cli">${escHtml(nombre)} ${estadoBadge}</div>
             <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
               ${fechaLabel}
-              <span class="dash-b2b-litros">${fmtNum(p.litros_totales || 0)}L</span>
+              <span class="dash-b2b-litros">${fmtNum(p.total_litros || 0)}L</span>
             </div>
           </div>`;
       }).join('');

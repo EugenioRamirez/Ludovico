@@ -493,9 +493,18 @@ select {
 .dash-prod-kpi-ok     .dash-prod-val { color: #2E7D32; }
 .dash-prod-kpi-blue   .dash-prod-val { color: var(--blue); }
 .dash-prod-kpi-purple .dash-prod-val { color: #7B1FA2; }
+.dash-prod-kpi-crit   { background: #FFEBEE; border-bottom: 3px solid var(--red); }
+.dash-prod-kpi-crit   .dash-prod-val { color: var(--red); }
 .dash-prod-lbl {
   font-size: 10px; font-weight: 600; color: var(--text-muted);
   text-transform: uppercase; margin-top: 4px; letter-spacing: 0.3px;
+}
+
+/* Subtítulo dentro de una dash-card (separador de sub-sección) */
+.dash-card-subhead {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.3px;
+  margin: 14px 0 8px; padding-top: 10px; border-top: 1px solid var(--border);
 }
 
 /* Entregas B2B en dashboard */

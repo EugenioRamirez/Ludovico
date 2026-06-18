@@ -55,13 +55,6 @@
           </svg>
           <span>Dashboard</span>
         </button>
-        <button class="nav-item" data-group="operaciones">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
-          </svg>
-          <span>Operaciones</span>
-        </button>
         <button class="nav-item" data-screen="calculadora">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/>
@@ -168,12 +161,31 @@
           </div>
         </div>
 
-        <!-- Sección 3: Entregas B2B esta semana -->
+        <!-- Sección 3: B2B -->
         <div class="card dash-card" id="dash-b2b-card">
           <div class="dash-card-header">
-            <span class="dash-card-title">🚚 Entregas B2B — esta semana</span>
+            <span class="dash-card-title">📊 Negocio B2B</span>
             <button class="btn btn-sm btn-ghost" onclick="App.nav('db2b')">Dashboard B2B →</button>
           </div>
+          <div class="dash-prod-grid">
+            <div class="dash-prod-kpi dash-prod-kpi-blue" onclick="App.nav('pedidos')">
+              <div class="dash-prod-val" id="bkpi-pedact">–</div>
+              <div class="dash-prod-lbl">Pedidos activos</div>
+            </div>
+            <div class="dash-prod-kpi dash-prod-kpi-ok" onclick="App.nav('pedidos')">
+              <div class="dash-prod-val" id="bkpi-enthoy">–</div>
+              <div class="dash-prod-lbl">Entregas hoy</div>
+            </div>
+            <div class="dash-prod-kpi dash-prod-kpi-ok" id="bkpi-incid-card" onclick="App.nav('pedidos')">
+              <div class="dash-prod-val" id="bkpi-incid">–</div>
+              <div class="dash-prod-lbl">Incidencias</div>
+            </div>
+            <div class="dash-prod-kpi dash-prod-kpi-purple" onclick="App.nav('proformas')">
+              <div class="dash-prod-val" id="bkpi-facmes">–</div>
+              <div class="dash-prod-lbl">Facturación mes</div>
+            </div>
+          </div>
+          <div class="dash-card-subhead">🚚 Próximas entregas</div>
           <div id="dash-b2b-entregas">
             <div class="spinner-wrap" style="padding:12px"><div class="spinner"></div></div>
           </div>
