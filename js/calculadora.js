@@ -84,6 +84,8 @@ const RECETAS = [
   { categoria:"Especiales & Gourmets", nombre:"Helado de Matcha",
     litros_base:1, total:1129,
     ingredientes:[["Leche entera",750],["Nata 35%",100],["Azúcar",100],["Base Pro Crema",125],["Matcha",28],["Dextrosa",25],["Sal",1]]},
+  { categoria:"Especiales & Gourmets", nombre:"Helado de Menta",
+    total:1061, ingredientes:[["Leche entera",750],["Azúcar",100],["Base Pro Crema",100],["Glicerina",10],["Menta verde",100],["Sal",1]]},
 
   // ── Granizados & Bebidas ───────────────────────────────────────────────────
   { categoria:"Granizados & Bebidas", nombre:"Granizado de Limón",
