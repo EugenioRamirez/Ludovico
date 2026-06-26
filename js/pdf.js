@@ -2,14 +2,20 @@
 
 const PdfExport = {
 
-  exportarCompras(items) {
+  exportarCompras(items, filtro = 'all') {
     if (!items || !items.length) {
-      showToast('No hay ítems en la lista', 'info');
+      showToast('No hay ítems en esta vista', 'info');
       return;
     }
 
-    // Filtrar no-recibidos (pendiente + pedido)
-    const activos = items.filter(i => i.estado !== 'recibido');
+    // Etiqueta del filtro activo, para el título y el nombre del archivo
+    const FILTRO_LABELS = {
+      all:       'Todos',
+      pendiente: 'Pendiente',
+      pedido:    'Pedido',
+      recibido:  'Recibido',
+    };
+    const filtroLbl = FILTRO_LABELS[filtro] || 'Todos';
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -43,7 +49,7 @@ const PdfExport = {
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    doc.text('Lista de Compras', ML, 21);
+    doc.text(`Lista de Compras · ${filtroLbl}`, ML, 21);
 
     // Fecha
     const fecha = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -188,7 +194,7 @@ const PdfExport = {
 
     // ── Descargar ─────────────────────────────────────────────────────────────
     const ts   = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 16);
-    doc.save(`Compras_Ludovico_${ts}.pdf`);
+    doc.save(`Compras_Ludovico_${filtroLbl}_${ts}.pdf`);
     showToast('PDF generado ✓', 'success');
   }
 };

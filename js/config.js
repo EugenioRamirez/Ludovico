@@ -7,7 +7,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ── Empleadas ─────────────────────────────────────────────────────────────────
 const EMPLEADAS = [
   { nombre: 'Laura Duarte',   avatar: 'LD', color: '#1565A0' },
-  { nombre: 'Lorena Carmona', avatar: 'LC', color: '#00B4CC' },
+  { nombre: 'Ana Martinez',   avatar: 'AM', color: '#00B4CC' },
   { nombre: 'Susan Matildo',  avatar: 'SM', color: '#F5821F' },
   { nombre: 'Administrador',  avatar: 'AD', color: '#7EC855' },
 ];

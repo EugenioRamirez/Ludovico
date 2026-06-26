@@ -243,8 +243,8 @@ const Compras = {
       }
     });
 
-    // Exportar PDF
-    document.getElementById('btn-export-pdf').onclick = () => PdfExport.exportarCompras(this.items);
+    // Exportar PDF — solo lo que se ve en la pestaña de filtro activa
+    document.getElementById('btn-export-pdf').onclick = () => PdfExport.exportarCompras(this.filtered(), this.filtro);
   },
 
   openModal() {
