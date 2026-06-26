@@ -108,14 +108,17 @@ const PdfExport = {
 
     y += 8;
 
-    // Filas
+    // Filas — ordenadas por cantidad descendente (lo que hay que comprar
+    // en mayor volumen primero); los ítems sin cantidad especificada van al final
+    const itemsOrdenados = [...items].sort((a, b) => (b.cantidad ?? 0) - (a.cantidad ?? 0));
+
     const estadoInfo = {
       pendiente: { lbl: 'Pendiente',  color: ORANGE },
       pedido:    { lbl: 'Pedido',     color: CYAN   },
       recibido:  { lbl: 'Recibido',   color: [126, 200, 85] },
     };
 
-    items.forEach((item, idx) => {
+    itemsOrdenados.forEach((item, idx) => {
       if (y > H - 20) {
         doc.addPage();
         y = 20;
