@@ -4,6 +4,8 @@ const Produccion = {
 
   _accion: null,
   _tabActiva: 'operativa',
+  _filtroActivo: 'todos',
+  _grupos: null, // último agrupado por sabor de mix/listo/comerc — usado por abrirModalGrupo()
 
   // ── Cargar pantalla ──────────────────────────────────────────────────────
   async load() {
@@ -19,9 +21,9 @@ const Produccion = {
       <div id="prod-panel-operativa">
         <!-- KPIs -->
         <div class="prod-kpi-row">
-          <div class="prod-kpi-box prod-kpi-mix"><div class="prod-kpi-v" id="pkpi-mixes">–</div><div class="prod-kpi-l">Mixes preparados</div></div>
+          <div class="prod-kpi-box prod-kpi-mix"><div class="prod-kpi-v" id="pkpi-op-mixes">–</div><div class="prod-kpi-l">Mixes preparados</div></div>
           <div class="prod-kpi-box prod-kpi-cong"><div class="prod-kpi-v" id="pkpi-congel">–</div><div class="prod-kpi-l">En congelación</div></div>
-          <div class="prod-kpi-box prod-kpi-list"><div class="prod-kpi-v" id="pkpi-listos">–</div><div class="prod-kpi-l">Listo para Venta</div></div>
+          <div class="prod-kpi-box prod-kpi-list"><div class="prod-kpi-v" id="pkpi-op-listos">–</div><div class="prod-kpi-l">Listo para Venta</div></div>
           <div class="prod-kpi-box prod-kpi-com"><div class="prod-kpi-v" id="pkpi-comerc">–</div><div class="prod-kpi-l">En comercialización</div></div>
         </div>
 
@@ -86,15 +88,50 @@ const Produccion = {
     document.getElementById('prod-panel-operativa').style.display = tab === 'operativa' ? '' : 'none';
     document.getElementById('prod-panel-historico').style.display = tab === 'historico' ? '' : 'none';
     if (tab === 'historico') this.cargarHistorico();
+    else this.renderOperativa();
   },
 
   // ── Filtrar lotes ────────────────────────────────────────────────────────
   filtrar(estado, btn) {
+    this._filtroActivo = estado;
     document.querySelectorAll('.prod-filtro').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    this._aplicarFiltro();
+  },
+
+  // Reaplica this._filtroActivo a los lotes actualmente renderizados —
+  // se llama tanto desde filtrar() como tras cada renderOperativa(), para
+  // que un refresco de datos no "olvide" qué pestaña de filtro estaba activa.
+  _aplicarFiltro() {
     document.querySelectorAll('.prod-lote').forEach(c => {
-      c.style.display = (estado === 'todos' || c.dataset.estado === estado) ? '' : 'none';
+      c.style.display = (this._filtroActivo === 'todos' || c.dataset.estado === this._filtroActivo) ? '' : 'none';
     });
+  },
+
+  // Agrupa filas de una tabla por receta_nombre, sumando lo pendiente de cada
+  // una. Cada grupo guarda sus lotes de origen ordenados por fecha ascendente
+  // (el más antiguo primero) para poder repartir acciones en FIFO: al pulsar
+  // "Congelar/Comercializar/Vendido" sobre la tarjeta fusionada, los litros
+  // solicitados se descuentan empezando por el lote que lleva más tiempo
+  // esperando.
+  _agruparPorSabor(rows, pendienteFn, fechaFn) {
+    const mapa = new Map();
+    rows.forEach(r => {
+      const pend = +pendienteFn(r).toFixed(2);
+      if (pend <= 0.001) return;
+      if (!mapa.has(r.receta_nombre)) mapa.set(r.receta_nombre, { nombre: r.receta_nombre, total: 0, lotes: [] });
+      const g = mapa.get(r.receta_nombre);
+      g.total += pend;
+      g.lotes.push({ id: r.id, pend, fecha: fechaFn(r) });
+    });
+    const grupos = Array.from(mapa.values());
+    grupos.forEach(g => {
+      g.lotes.sort((a, b) => new Date(a.fecha) - new Date(b.fecha)); // FIFO
+      g.total = +g.total.toFixed(2);
+      g.fechaMin = g.lotes[0]?.fecha;
+    });
+    grupos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+    return grupos;
   },
 
   // ── Renderizar operativa ─────────────────────────────────────────────────
@@ -107,92 +144,101 @@ const Produccion = {
       sb.from('lotes_venta').select('*').gt('litros_restantes', 0).order('fecha_comercializacion', { ascending: false }),
     ]);
 
-    // KPIs
-    const mixesPend  = (mixes  || []).filter(m => (m.litros - (m.litros_cremados||0)) > 0.001).length;
-    const listosPend = (listos || []).filter(c => (c.litros - (c.litros_comercializados||0)) > 0.001).length;
-    document.getElementById('pkpi-mixes').textContent  = mixesPend;
-    document.getElementById('pkpi-congel').textContent = (congel || []).length;
-    document.getElementById('pkpi-listos').textContent = listosPend;
-    document.getElementById('pkpi-comerc').textContent = (comerc || []).length;
+    // Agrupar por sabor — una tarjeta por sabor+estado, con los litros de
+    // todos sus lotes sumados. "congel" también se agrupa solo para mostrar
+    // (no tiene acción, así que no necesita guardarse en this._grupos).
+    const gruposMix    = this._agruparPorSabor(mixes  || [], m => m.litros - (m.litros_cremados||0),       m => m.fecha);
+    const gruposCongel = this._agruparPorSabor(congel || [], c => c.litros,                                  c => c.fecha_cremado);
+    const gruposListo  = this._agruparPorSabor(listos || [], c => c.litros - (c.litros_comercializados||0), c => c.fecha_cremado);
+    const gruposComerc = this._agruparPorSabor(comerc || [], v => v.litros_restantes,                        v => v.fecha_comercializacion);
+
+    // Guardado para que abrirModalGrupo() pueda resolver, al pulsar una
+    // acción, qué lotes concretos hay detrás de la tarjeta fusionada.
+    this._grupos = { mix: gruposMix, listo: gruposListo, comerc: gruposComerc };
+
+    // KPIs — número de sabores distintos pendientes en cada estado (coincide
+    // ahora con el número de tarjetas que se ven debajo, ya fusionadas)
+    document.getElementById('pkpi-op-mixes').textContent  = gruposMix.length;
+    document.getElementById('pkpi-congel').textContent    = gruposCongel.length;
+    document.getElementById('pkpi-op-listos').textContent = gruposListo.length;
+    document.getElementById('pkpi-comerc').textContent    = gruposComerc.length;
 
     // Construir lista unificada
     const items = [];
+    const nLotesTxt = g => g.lotes.length > 1 ? ` · ${g.lotes.length} lotes` : '';
 
-    (mixes || []).filter(m => (m.litros - (m.litros_cremados||0)) > 0.001).forEach(m => {
-      const pend = +(m.litros - (m.litros_cremados||0)).toFixed(2);
-      items.push({ estado: 'mix', fecha: m.fecha, html: `
+    gruposMix.forEach(g => {
+      items.push({ estado: 'mix', fecha: g.fechaMin, html: `
         <div class="prod-lote estado-mix" data-estado="mix">
           <div class="prod-lote-color"></div>
           <div class="prod-lote-ico">🟡</div>
           <div class="prod-lote-info">
-            <div class="prod-lote-nombre">${m.receta_nombre}</div>
+            <div class="prod-lote-nombre">${g.nombre}</div>
             <div class="prod-lote-meta">
               <span class="plote-badge badge-mix">Mix preparado</span>
-              <span>elaborado ${this.fmtF(m.fecha)}</span>
-              ${m.litros_cremados > 0 ? `<span style="color:#FFD54F">${pend}L pendientes</span>` : ''}
+              <span>elaborado ${this.fmtF(g.fechaMin)}${nLotesTxt(g)}</span>
             </div>
           </div>
           <div class="prod-lote-accion">
-            <div class="prod-lote-litros">${m.litros}L</div>
-            <button class="prod-btn-accion prod-btn-mix" onclick="Produccion.abrirModal('cremar','${m.id}','${this.esc(m.receta_nombre)}',${pend})">→ Congelar</button>
+            <div class="prod-lote-litros">${g.total}L</div>
+            <button class="prod-btn-accion prod-btn-mix" onclick="Produccion.abrirModalGrupo('cremar','${this.esc(g.nombre)}')">→ Congelar</button>
           </div>
         </div>` });
     });
 
-    (congel || []).forEach(c => {
-      items.push({ estado: 'congel', fecha: c.fecha_cremado, html: `
+    gruposCongel.forEach(g => {
+      items.push({ estado: 'congel', fecha: g.fechaMin, html: `
         <div class="prod-lote estado-congel" data-estado="congel">
           <div class="prod-lote-color"></div>
           <div class="prod-lote-ico">🔵</div>
           <div class="prod-lote-info">
-            <div class="prod-lote-nombre">${c.receta_nombre}</div>
+            <div class="prod-lote-nombre">${g.nombre}</div>
             <div class="prod-lote-meta">
               <span class="plote-badge badge-congel">En congelación</span>
-              <span>desde hoy</span>
+              <span>desde hoy${nLotesTxt(g)}</span>
             </div>
           </div>
           <div class="prod-lote-accion">
-            <div class="prod-lote-litros">${c.litros}L</div>
+            <div class="prod-lote-litros">${g.total}L</div>
             <span class="prod-lote-nota">listo mañana</span>
           </div>
         </div>` });
     });
 
-    (listos || []).filter(c => (c.litros - (c.litros_comercializados||0)) > 0.001).forEach(c => {
-      const pend = +(c.litros - (c.litros_comercializados||0)).toFixed(2);
-      items.push({ estado: 'listo', fecha: c.fecha_cremado, html: `
+    gruposListo.forEach(g => {
+      items.push({ estado: 'listo', fecha: g.fechaMin, html: `
         <div class="prod-lote estado-listo" data-estado="listo">
           <div class="prod-lote-color"></div>
           <div class="prod-lote-ico">🟢</div>
           <div class="prod-lote-info">
-            <div class="prod-lote-nombre">${c.receta_nombre}</div>
+            <div class="prod-lote-nombre">${g.nombre}</div>
             <div class="prod-lote-meta">
               <span class="plote-badge badge-listo">Listo para Venta</span>
-              <span>congelado ${this.fmtF(c.fecha_cremado)}</span>
+              <span>congelado ${this.fmtF(g.fechaMin)}${nLotesTxt(g)}</span>
             </div>
           </div>
           <div class="prod-lote-accion">
-            <div class="prod-lote-litros">${pend}L</div>
-            <button class="prod-btn-accion prod-btn-listo" onclick="Produccion.abrirModal('comercializar','${c.id}','${this.esc(c.receta_nombre)}',${pend})">→ Comercializar</button>
+            <div class="prod-lote-litros">${g.total}L</div>
+            <button class="prod-btn-accion prod-btn-listo" onclick="Produccion.abrirModalGrupo('comercializar','${this.esc(g.nombre)}')">→ Comercializar</button>
           </div>
         </div>` });
     });
 
-    (comerc || []).forEach(v => {
-      items.push({ estado: 'comerc', fecha: v.fecha_comercializacion, html: `
+    gruposComerc.forEach(g => {
+      items.push({ estado: 'comerc', fecha: g.fechaMin, html: `
         <div class="prod-lote estado-comerc" data-estado="comerc">
           <div class="prod-lote-color"></div>
           <div class="prod-lote-ico">⚪</div>
           <div class="prod-lote-info">
-            <div class="prod-lote-nombre">${v.receta_nombre}</div>
+            <div class="prod-lote-nombre">${g.nombre}</div>
             <div class="prod-lote-meta">
               <span class="plote-badge badge-comerc">En comercialización</span>
-              <span>desde ${this.fmtF(v.fecha_comercializacion)}</span>
+              <span>desde ${this.fmtF(g.fechaMin)}${nLotesTxt(g)}</span>
             </div>
           </div>
           <div class="prod-lote-accion">
-            <div class="prod-lote-litros">${v.litros_restantes}L</div>
-            <button class="prod-btn-accion prod-btn-vendido" onclick="Produccion.abrirModal('baja','${v.id}','${this.esc(v.receta_nombre)}',${v.litros_restantes})">✓ Vendido</button>
+            <div class="prod-lote-litros">${g.total}L</div>
+            <button class="prod-btn-accion prod-btn-vendido" onclick="Produccion.abrirModalGrupo('baja','${this.esc(g.nombre)}')">✓ Vendido</button>
           </div>
         </div>` });
     });
@@ -203,6 +249,7 @@ const Produccion = {
     } else {
       cont.innerHTML = items.map(i => i.html).join('');
     }
+    this._aplicarFiltro();
   },
 
   // ── Histórico ────────────────────────────────────────────────────────────
@@ -301,9 +348,22 @@ const Produccion = {
     }).join('');
   },
 
+  // Resuelve, a partir del nombre de sabor pulsado en una tarjeta fusionada,
+  // qué lotes concretos hay detrás (guardados por renderOperativa() en
+  // this._grupos) y abre el modal con el total combinado como máximo.
+  abrirModalGrupo(tipo, nombre) {
+    const claves = { cremar: 'mix', comercializar: 'listo', baja: 'comerc' };
+    const grupo = (this._grupos?.[claves[tipo]] || []).find(g => g.nombre === nombre);
+    if (!grupo) { showToast('No se encontró el lote — refresca la pantalla', 'error'); return; }
+    this.abrirModal(tipo, grupo.lotes, nombre, grupo.total);
+  },
+
   // ── Modal unificado (usa modal estático del HTML) ────────────────────────
-  abrirModal(tipo, id, nombre, max) {
-    this._accion = { tipo, id, nombre, max };
+  // `lotes` es la lista de lotes de origen (FIFO, más antiguo primero) que
+  // hay detrás de la tarjeta — vacía/irrelevante para tipo 'mix', que es alta
+  // nueva y no consume nada existente.
+  abrirModal(tipo, lotes, nombre, max) {
+    this._accion = { tipo, lotes: lotes || [], nombre, max };
     const titulos   = { cremar: 'Poner a congelar', comercializar: 'Comercializar', baja: 'Marcar como vendido', mix: 'Preparar Mix' };
     const fechaLbls = { cremar: 'Fecha congelación', comercializar: 'Fecha comercialización', mix: 'Fecha elaboración' };
     const litLbls   = {
@@ -314,7 +374,7 @@ const Produccion = {
     };
 
     document.getElementById('modal-prod-title').textContent    = titulos[tipo] || tipo;
-    document.getElementById('modal-prod-subtitle').textContent = nombre;
+    document.getElementById('modal-prod-subtitle').textContent = nombre + (lotes && lotes.length > 1 ? ` (${lotes.length} lotes — se aplicará empezando por el más antiguo)` : '');
     document.getElementById('modal-prod-litros').value         = max < 9999 ? max : '';
     document.getElementById('modal-prod-litros').max           = max < 9999 ? max : '';
     document.getElementById('modal-prod-litros-lbl').textContent = litLbls[tipo] || 'Litros';
@@ -333,7 +393,7 @@ const Produccion = {
 
   async ejecutarAccion() {
     if (!this._accion) return;
-    const { tipo, id, nombre, max } = this._accion;
+    const { tipo, nombre, max, lotes } = this._accion;
     const litros = parseFloat(document.getElementById('modal-prod-litros').value);
     const fecha  = document.getElementById('modal-prod-fecha').value;
     const notas  = document.getElementById('modal-prod-notas').value.trim() || null;
@@ -344,55 +404,71 @@ const Produccion = {
 
     document.getElementById('btn-save-prod').disabled = true;
     try {
-      if      (tipo === 'mix')           await this._guardarMix(nombre, litros, fecha, notas);
-      else if (tipo === 'cremar')        await this._guardarCremado(id, nombre, litros, fecha, notas);
-      else if (tipo === 'comercializar') await this._guardarComercializado(id, nombre, litros, fecha, notas);
-      else if (tipo === 'baja')          await this._guardarBaja(id, litros, notas);
+      if (tipo === 'mix') {
+        await this._crearMix(nombre, litros, fecha, notas);
+        showToast(`Mix de ${nombre} (${litros}L) registrado ✓`);
+      } else {
+        // Repartir los litros solicitados entre los lotes de origen,
+        // empezando por el más antiguo (FIFO) hasta cubrir lo pedido.
+        let restante = litros;
+        for (const lote of lotes) {
+          if (restante <= 0.005) break;
+          const usar = +Math.min(restante, lote.pend).toFixed(2);
+          if (usar <= 0) continue;
+          if      (tipo === 'cremar')        await this._aplicarCremado(lote.id, nombre, usar, fecha, notas);
+          else if (tipo === 'comercializar') await this._aplicarComercializado(lote.id, nombre, usar, fecha, notas);
+          else if (tipo === 'baja')          await this._aplicarBaja(lote.id, usar, notas);
+          restante = +(restante - usar).toFixed(2);
+        }
+        const msgs = {
+          cremar:        `${litros}L de ${nombre} en congelación ✓`,
+          comercializar: `${litros}L de ${nombre} en comercialización ✓`,
+          baja:          `${litros}L de ${nombre} vendidos registrados ✓`,
+        };
+        showToast(msgs[tipo] || 'Hecho ✓');
+      }
+      closeModal('modal-prod-overlay');
+      await this.renderOperativa();
+    } catch (err) {
+      showToast('Error: ' + (err.message || err), 'error');
     } finally {
       document.getElementById('btn-save-prod').disabled = false;
     }
   },
 
-  async _guardarMix(nombre, litros, fecha, notas) {
+  // ── Mutaciones puras (sin toast/cierre de modal — eso lo hace ejecutarAccion,
+  // una sola vez, aunque una acción FIFO toque varios lotes de origen) ──────
+  async _crearMix(nombre, litros, fecha, notas) {
     const { error } = await sb.from('lotes_mix').insert({ receta_nombre: nombre, litros, fecha, notas });
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    closeModal('modal-prod-overlay');
-    showToast(`Mix de ${nombre} (${litros}L) registrado ✓`);
+    if (error) throw error;
   },
 
-  async _guardarCremado(mixId, nombre, litros, fecha, notas) {
+  async _aplicarCremado(mixId, nombre, litros, fecha, notas) {
     const { error } = await sb.from('lotes_cremado').insert({ mix_id: mixId, receta_nombre: nombre, litros, fecha_cremado: fecha, notas });
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) throw error;
     const { data: mix } = await sb.from('lotes_mix').select('litros_cremados').eq('id', mixId).single();
-    await sb.from('lotes_mix').update({ litros_cremados: +((mix?.litros_cremados||0) + litros).toFixed(2) }).eq('id', mixId);
-    closeModal('modal-prod-overlay');
-    showToast(`${litros}L de ${nombre} en congelación ✓`);
-    await this.renderOperativa();
+    const { error: errUp } = await sb.from('lotes_mix').update({ litros_cremados: +((mix?.litros_cremados||0) + litros).toFixed(2) }).eq('id', mixId);
+    if (errUp) throw errUp;
   },
 
-  async _guardarComercializado(cremadoId, nombre, litros, fecha, notas) {
+  async _aplicarComercializado(cremadoId, nombre, litros, fecha, notas) {
     const { error } = await sb.from('lotes_venta').insert({ cremado_id: cremadoId, receta_nombre: nombre, litros, litros_restantes: litros, fecha_comercializacion: fecha, notas });
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
+    if (error) throw error;
     const { data: cr } = await sb.from('lotes_cremado').select('litros_comercializados').eq('id', cremadoId).single();
-    await sb.from('lotes_cremado').update({ litros_comercializados: +((cr?.litros_comercializados||0) + litros).toFixed(2) }).eq('id', cremadoId);
-    closeModal('modal-prod-overlay');
-    showToast(`${litros}L de ${nombre} en comercialización ✓`);
-    await this.renderOperativa();
+    const { error: errUp } = await sb.from('lotes_cremado').update({ litros_comercializados: +((cr?.litros_comercializados||0) + litros).toFixed(2) }).eq('id', cremadoId);
+    if (errUp) throw errUp;
   },
 
-  async _guardarBaja(ventaId, litros, notas) {
+  async _aplicarBaja(ventaId, litros, notas) {
     const { data: lote } = await sb.from('lotes_venta').select('litros_restantes').eq('id', ventaId).single();
     const nuevos = Math.max(0, +((lote?.litros_restantes||0) - litros).toFixed(2));
     const { error } = await sb.from('lotes_venta').update({ litros_restantes: nuevos, notas }).eq('id', ventaId);
-    if (error) { showToast('Error: ' + error.message, 'error'); return; }
-    closeModal('modal-prod-overlay');
-    showToast(`${litros}L vendidos registrados ✓`);
-    await this.renderOperativa();
+    if (error) throw error;
   },
 
   // ── Desde calculadora ────────────────────────────────────────────────────
   registrarMixDesdeCalc(nombre, litros) {
-    this._accion = { tipo: 'mix', id: null, nombre, max: 9999 };
+    this._accion = { tipo: 'mix', lotes: [], nombre, max: 9999 };
     document.getElementById('modal-prod-title').textContent      = 'Preparar Mix';
     document.getElementById('modal-prod-subtitle').textContent   = nombre;
     document.getElementById('modal-prod-litros').value           = litros;
