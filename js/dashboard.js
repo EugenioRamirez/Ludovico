@@ -8,7 +8,7 @@ const Dashboard = {
 
     document.getElementById('dash-b2b-entregas').innerHTML =
       '<div class="spinner-wrap" style="padding:12px"><div class="spinner"></div></div>';
-    ['bkpi-pedact', 'bkpi-enthoy', 'bkpi-incid', 'bkpi-facmes'].forEach(id => {
+    ['bkpi-litros', 'bkpi-pedservidos', 'bkpi-importe'].forEach(id => {
       document.getElementById(id).textContent = '–';
     });
 
@@ -237,27 +237,27 @@ const Dashboard = {
 
   async loadB2BKPIs() {
     try {
-      const hoy   = new Date().toISOString().split('T')[0];
       const ahora = new Date();
       const mes   = ahora.getMonth() + 1;
       const anio  = ahora.getFullYear();
-      const ACTIVOS = ['pendiente', 'confirmado', 'preparando', 'incidencia'];
 
-      const [rPedAct, rEntHoy, rIncid, rFactMes] = await Promise.all([
-        sb.from('pedidos_b2b').select('id', { count: 'exact', head: true })
-          .in('estado', ACTIVOS),
-        sb.from('pedidos_b2b').select('id', { count: 'exact', head: true })
-          .in('estado', ACTIVOS).eq('fecha_entrega_prevista', hoy),
-        sb.from('pedidos_b2b').select('id', { count: 'exact', head: true })
-          .or(`estado.eq.incidencia,and(estado.in.(pendiente,confirmado,preparando),fecha_entrega_prevista.lt.${hoy})`),
-        sb.from('proformas_b2b').select('total_final')
-          .eq('periodo_mes', mes).eq('periodo_anio', anio),
-      ]);
+      // Mismo rango de fechas y misma definición de "servido" que usa la
+      // pantalla "Dashboard B2B →" (estado entregado/facturado, por fecha de
+      // entrega prevista dentro del mes en curso) — así las dos pantallas
+      // siempre coinciden y no hay que mantener dos lógicas distintas.
+      const mesIniIso = `${anio}-${String(mes).padStart(2, '0')}-01`;
+      const mesFinDia = new Date(anio, mes, 0).getDate();
+      const mesFinIso = `${anio}-${String(mes).padStart(2, '0')}-${String(mesFinDia).padStart(2, '0')}`;
 
-      // Las consultas de Supabase NO lanzan excepción si fallan (RLS, columna
-      // mal escrita, filtro inválido…): devuelven { count: null, error }. Si no
-      // comprobamos `.error` aquí, un fallo real se ve idéntico a "0 pedidos" en
-      // la tarjeta. Lo registramos en consola para poder diagnosticarlo.
+      const rServidos = await sb.from('pedidos_b2b')
+        .select('total_litros, total_importe')
+        .in('estado', ['entregado', 'facturado'])
+        .gte('fecha_entrega_prevista', mesIniIso)
+        .lte('fecha_entrega_prevista', mesFinIso);
+
+      // Supabase NO lanza excepción si la consulta falla (RLS, columna mal
+      // escrita…): devuelve { data: null, error }. Si no comprobamos `.error`
+      // aquí, un fallo real se ve idéntico a "0" en la tarjeta.
       const setKpi = (id, resultado, valor) => {
         const el = document.getElementById(id);
         if (resultado.error) {
@@ -271,22 +271,17 @@ const Dashboard = {
         }
       };
 
-      const nIncid    = rIncid.count || 0;
-      const facturMes = (rFactMes.data || [])
-        .reduce((s, p) => s + parseFloat(p.total_final || 0), 0);
+      const filas       = rServidos.data || [];
+      const litrosMes    = filas.reduce((s, p) => s + parseFloat(p.total_litros  || 0), 0);
+      const importeMes   = filas.reduce((s, p) => s + parseFloat(p.total_importe || 0), 0);
 
-      setKpi('bkpi-pedact', rPedAct,   rPedAct.count || 0);
-      setKpi('bkpi-enthoy', rEntHoy,   rEntHoy.count || 0);
-      setKpi('bkpi-incid',  rIncid,    nIncid);
-      setKpi('bkpi-facmes', rFactMes,  Math.round(facturMes).toLocaleString('es-ES') + '€');
-
-      const incidCard = document.getElementById('bkpi-incid-card');
-      incidCard.classList.toggle('dash-prod-kpi-crit', nIncid > 0);
-      incidCard.classList.toggle('dash-prod-kpi-ok', nIncid === 0);
+      setKpi('bkpi-litros',      rServidos, litrosMes.toFixed(1) + 'L');
+      setKpi('bkpi-pedservidos', rServidos, filas.length);
+      setKpi('bkpi-importe',     rServidos, Math.round(importeMes).toLocaleString('es-ES') + '€');
 
     } catch (e) {
       console.error('loadB2BKPIs:', e);
-      ['bkpi-pedact', 'bkpi-enthoy', 'bkpi-incid', 'bkpi-facmes'].forEach(id => {
+      ['bkpi-litros', 'bkpi-pedservidos', 'bkpi-importe'].forEach(id => {
         document.getElementById(id).textContent = '–';
       });
     }
