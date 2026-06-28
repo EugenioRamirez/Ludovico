@@ -353,12 +353,36 @@ const Produccion = {
     } else {
       const totalRank = ranking.reduce((s, r) => s + r.litros, 0);
       const maxLitros = ranking[0].litros || 1;
-      contRank.innerHTML = ranking.map((r, i) => {
+
+      // Top 3 → podio. El orden visual de las barras es 2°, 1°, 3°
+      // (la del medio, más alta, es la primera). Si hay menos de 3
+      // sabores con ventas, sencillamente se omiten las barras que faltan.
+      const top3   = ranking.slice(0, 3);
+      const claves = ['oro', 'plata', 'bronce'];
+      const orden  = [1, 0, 2].filter(i => top3[i]);
+      const podioHtml = !top3.length ? '' : `<div class="prod-podio">${orden.map(i => {
+        const r       = top3[i];
+        const corona  = i === 0 ? '<div class="prod-podio-corona">👑</div>' : '';
+        const medalla = i !== 0 ? `<div class="prod-podio-medalla">${i + 1}°</div>` : '';
+        return `
+          <div class="prod-podio-item">
+            <div class="prod-podio-bar ${claves[i]}">
+              ${corona}${medalla}
+              <div class="prod-podio-num">${i + 1}</div>
+            </div>
+            <div class="prod-podio-nombre">${r.nombre}</div>
+            <div class="prod-podio-litros">${r.litros}L</div>
+          </div>`;
+      }).join('')}</div>`;
+
+      // Ranks 4+ → misma lista de antes, bajo el divisor "Otros sabores".
+      const resto = ranking.slice(3);
+      const restoHtml = !resto.length ? '' : `<div class="prod-seccion-lbl prod-rank-otros-lbl">Otros sabores</div>${resto.map((r, idx) => {
         const pct   = totalRank > 0 ? Math.round((r.litros / totalRank) * 100) : 0;
         const ancho = Math.round((r.litros / maxLitros) * 100);
         return `
           <div class="prod-rank-item">
-            <div class="prod-rank-pos">${i + 1}</div>
+            <div class="prod-rank-pos">${idx + 4}</div>
             <div class="prod-rank-info">
               <div class="prod-rank-nombre">${r.nombre}</div>
               <div class="prod-rank-bar"><div class="prod-rank-bar-fill" style="width:${ancho}%"></div></div>
@@ -368,7 +392,9 @@ const Produccion = {
               <div class="prod-rank-pct">${pct}%</div>
             </div>
           </div>`;
-      }).join('');
+      }).join('')}`;
+
+      contRank.innerHTML = podioHtml + restoHtml;
     }
 
     cont.innerHTML = data.map(v => {

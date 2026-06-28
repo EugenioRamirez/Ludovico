@@ -1361,11 +1361,23 @@ select {
 .prod-hist-kpi-l { font-size: 0.6rem; color: #888; margin-top: 3px; }
 
 #prod-hist-ranking    { padding: 0 12px 18px; }
+
+/* Podio top-3 */
+.prod-podio           { display: flex; align-items: flex-end; justify-content: center; gap: 12px; background: #fff; border-radius: 14px; padding: 26px 14px 18px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.prod-podio-item      { flex: 1 1 0; max-width: 120px; display: flex; flex-direction: column; align-items: center; }
+.prod-podio-bar       { position: relative; width: 100%; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+.prod-podio-bar.oro      { height: 180px; background: linear-gradient(180deg, #FFAB54 0%, #F5821F 55%, #E8690D 100%); }
+.prod-podio-bar.plata    { height: 138px; background: linear-gradient(180deg, #CBD6E0 0%, #9AAEC2 55%, #748AA0 100%); }
+.prod-podio-bar.bronce   { height: 108px; background: linear-gradient(180deg, #D9AE6E 0%, #BD8845 55%, #9C6B2E 100%); }
+.prod-podio-corona    { position: absolute; top: -22px; font-size: 1.4rem; }
+.prod-podio-medalla   { position: absolute; top: 9px; font-size: 0.65rem; font-weight: 800; letter-spacing: .03em; color: rgba(255,255,255,0.85); }
+.prod-podio-num       { font-size: 2.5rem; font-weight: 800; color: rgba(255,255,255,0.4); line-height: 1; }
+.prod-podio-nombre    { margin-top: 10px; font-weight: 700; font-size: 0.78rem; color: #1a2a3a; text-align: center; line-height: 1.25; }
+.prod-podio-litros    { margin-top: 4px; font-weight: 800; font-size: 0.88rem; color: #2e7d32; }
+
+.prod-rank-otros-lbl  { margin-top: 4px; }
 .prod-rank-item       { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 10px; padding: 10px 14px; margin-bottom: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 .prod-rank-pos        { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #f1f1f1; color: #888; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
-.prod-rank-item:nth-child(1) .prod-rank-pos { background: #ffd54f; color: #7a5b00; }
-.prod-rank-item:nth-child(2) .prod-rank-pos { background: #e0e0e0; color: #555; }
-.prod-rank-item:nth-child(3) .prod-rank-pos { background: #ffccbc; color: #8a3b1f; }
 .prod-rank-info       { flex: 1; min-width: 0; }
 .prod-rank-nombre     { font-weight: 700; font-size: 0.86rem; color: #1a2a3a; margin-bottom: 4px; }
 .prod-rank-bar        { background: #f0f0f0; border-radius: 6px; height: 6px; overflow: hidden; }
