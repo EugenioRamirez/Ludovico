@@ -194,13 +194,16 @@ const Dashboard = {
           sb.from('lotes_venta').select('litros, litros_restantes').gte('fecha_comercializacion', hace7),
         ]);
 
-      const nMixes   = (mixes    || []).filter(m => (m.litros - (m.litros_cremados || 0)) > 0.001).length;
-      const nListos  = (cremados || []).filter(c => (c.litros - (c.litros_comercializados || 0)) > 0.001).length;
+      // Las 4 KPIs de esta tarjeta se expresan siempre en LITROS pendientes/movidos
+      // en cada etapa, para que sean comparables entre sí (antes "mixes" y "listos"
+      // contaban nº de lotes, mientras que "en tienda" y "vendidos" eran litros).
+      const lMixes   = (mixes    || []).reduce((s, m) => s + Math.max(0, (m.litros || 0) - (m.litros_cremados || 0)), 0).toFixed(1);
+      const lListos  = (cremados || []).reduce((s, c) => s + Math.max(0, (c.litros || 0) - (c.litros_comercializados || 0)), 0).toFixed(1);
       const lVitrina = (vitrina  || []).reduce((s, v) => s + parseFloat(v.litros_restantes || 0), 0).toFixed(1);
       const lVendidos = (ventas  || []).reduce((s, v) => s + parseFloat((v.litros || 0) - (v.litros_restantes || 0)), 0).toFixed(1);
 
-      document.getElementById('pkpi-mixes').textContent    = nMixes;
-      document.getElementById('pkpi-listos').textContent   = nListos;
+      document.getElementById('pkpi-mixes').textContent    = lMixes + 'L';
+      document.getElementById('pkpi-listos').textContent   = lListos + 'L';
       document.getElementById('pkpi-vitrina').textContent  = lVitrina + 'L';
       document.getElementById('pkpi-vendidos').textContent = lVendidos + 'L';
 
@@ -251,14 +254,31 @@ const Dashboard = {
           .eq('periodo_mes', mes).eq('periodo_anio', anio),
       ]);
 
+      // Las consultas de Supabase NO lanzan excepción si fallan (RLS, columna
+      // mal escrita, filtro inválido…): devuelven { count: null, error }. Si no
+      // comprobamos `.error` aquí, un fallo real se ve idéntico a "0 pedidos" en
+      // la tarjeta. Lo registramos en consola para poder diagnosticarlo.
+      const setKpi = (id, resultado, valor) => {
+        const el = document.getElementById(id);
+        if (resultado.error) {
+          console.error(`Dashboard.loadB2BKPIs [${id}]:`, resultado.error);
+          el.textContent = 'ERR';
+          el.title = resultado.error.message || 'Error al consultar Supabase';
+          el.style.color = 'var(--red, #c62828)';
+        } else {
+          el.textContent = valor;
+          el.title = '';
+        }
+      };
+
       const nIncid    = rIncid.count || 0;
       const facturMes = (rFactMes.data || [])
         .reduce((s, p) => s + parseFloat(p.total_final || 0), 0);
 
-      document.getElementById('bkpi-pedact').textContent = rPedAct.count || 0;
-      document.getElementById('bkpi-enthoy').textContent = rEntHoy.count || 0;
-      document.getElementById('bkpi-incid').textContent  = nIncid;
-      document.getElementById('bkpi-facmes').textContent = Math.round(facturMes).toLocaleString('es-ES') + '€';
+      setKpi('bkpi-pedact', rPedAct,   rPedAct.count || 0);
+      setKpi('bkpi-enthoy', rEntHoy,   rEntHoy.count || 0);
+      setKpi('bkpi-incid',  rIncid,    nIncid);
+      setKpi('bkpi-facmes', rFactMes,  Math.round(facturMes).toLocaleString('es-ES') + '€');
 
       const incidCard = document.getElementById('bkpi-incid-card');
       incidCard.classList.toggle('dash-prod-kpi-crit', nIncid > 0);
