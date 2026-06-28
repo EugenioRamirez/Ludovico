@@ -1360,6 +1360,20 @@ select {
 .prod-hist-kpi-v { font-size: 1.4rem; font-weight: 800; color: var(--orange); }
 .prod-hist-kpi-l { font-size: 0.6rem; color: #888; margin-top: 3px; }
 
+#prod-hist-ranking    { padding: 0 12px 18px; }
+.prod-rank-item       { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 10px; padding: 10px 14px; margin-bottom: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+.prod-rank-pos        { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: #f1f1f1; color: #888; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.prod-rank-item:nth-child(1) .prod-rank-pos { background: #ffd54f; color: #7a5b00; }
+.prod-rank-item:nth-child(2) .prod-rank-pos { background: #e0e0e0; color: #555; }
+.prod-rank-item:nth-child(3) .prod-rank-pos { background: #ffccbc; color: #8a3b1f; }
+.prod-rank-info       { flex: 1; min-width: 0; }
+.prod-rank-nombre     { font-weight: 700; font-size: 0.86rem; color: #1a2a3a; margin-bottom: 4px; }
+.prod-rank-bar        { background: #f0f0f0; border-radius: 6px; height: 6px; overflow: hidden; }
+.prod-rank-bar-fill   { background: var(--orange); height: 100%; border-radius: 6px; }
+.prod-rank-right      { text-align: right; flex-shrink: 0; }
+.prod-rank-litros     { font-weight: 800; font-size: 0.86rem; color: #2e7d32; }
+.prod-rank-pct        { font-size: 0.65rem; color: #888; margin-top: 1px; }
+
 #prod-hist-list   { padding: 0 12px 24px; }
 .prod-hist-item   { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 10px; padding: 11px 14px; margin-bottom: 6px; border-left: 3px solid #6a1b9a; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 .prod-hist-info   { flex: 1; min-width: 0; }

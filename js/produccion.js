@@ -66,6 +66,9 @@ const Produccion = {
           <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-sabores">–</div><div class="prod-hist-kpi-l">Sabores distintos</div></div>
         </div>
 
+        <div class="prod-seccion-lbl">🏆 Ranking de sabores vendidos</div>
+        <div id="prod-hist-ranking"><div class="prod-loading">Cargando…</div></div>
+
         <div class="prod-seccion-lbl">Detalle del periodo</div>
         <div id="prod-hist-list"><div class="prod-loading">Cargando…</div></div>
 
@@ -313,12 +316,14 @@ const Produccion = {
       .lte('fecha_comercializacion', hasta)
       .order('fecha_comercializacion', { ascending: false });
 
-    const cont = document.getElementById('prod-hist-list');
+    const cont     = document.getElementById('prod-hist-list');
+    const contRank = document.getElementById('prod-hist-ranking');
     if (!data || !data.length) {
       document.getElementById('hkpi-lotes').textContent   = '0';
       document.getElementById('hkpi-litros').textContent  = '0L';
       document.getElementById('hkpi-sabores').textContent = '0';
-      cont.innerHTML = '<div class="prod-empty">Sin ventas en este periodo</div>';
+      cont.innerHTML     = '<div class="prod-empty">Sin ventas en este periodo</div>';
+      contRank.innerHTML = '<div class="prod-empty">Sin ventas en este periodo</div>';
       return;
     }
 
@@ -328,6 +333,43 @@ const Produccion = {
     document.getElementById('hkpi-lotes').textContent   = data.length;
     document.getElementById('hkpi-litros').textContent  = litrosVendidos.toFixed(1) + 'L';
     document.getElementById('hkpi-sabores').textContent = saboresDistintos;
+
+    // Ranking de sabores — totaliza, para cada receta_nombre, los litros
+    // vendidos (litros - litros_restantes) de todos sus lotes dentro del
+    // periodo seleccionado, y lo ordena de mayor a menor. Usa la misma
+    // definición de "vendido" que el KPI "Litros vendidos" de arriba, así
+    // que la suma de este ranking siempre coincide con ese KPI.
+    const porSabor = new Map();
+    data.forEach(v => {
+      const vendido = +((v.litros || 0) - (v.litros_restantes || 0)).toFixed(2);
+      if (vendido <= 0) return;
+      porSabor.set(v.receta_nombre, +((porSabor.get(v.receta_nombre) || 0) + vendido).toFixed(2));
+    });
+    const ranking = Array.from(porSabor, ([nombre, litros]) => ({ nombre, litros }))
+      .sort((a, b) => b.litros - a.litros);
+
+    if (!ranking.length) {
+      contRank.innerHTML = '<div class="prod-empty">Sin ventas en este periodo</div>';
+    } else {
+      const totalRank = ranking.reduce((s, r) => s + r.litros, 0);
+      const maxLitros = ranking[0].litros || 1;
+      contRank.innerHTML = ranking.map((r, i) => {
+        const pct   = totalRank > 0 ? Math.round((r.litros / totalRank) * 100) : 0;
+        const ancho = Math.round((r.litros / maxLitros) * 100);
+        return `
+          <div class="prod-rank-item">
+            <div class="prod-rank-pos">${i + 1}</div>
+            <div class="prod-rank-info">
+              <div class="prod-rank-nombre">${r.nombre}</div>
+              <div class="prod-rank-bar"><div class="prod-rank-bar-fill" style="width:${ancho}%"></div></div>
+            </div>
+            <div class="prod-rank-right">
+              <div class="prod-rank-litros">${r.litros}L</div>
+              <div class="prod-rank-pct">${pct}%</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
 
     cont.innerHTML = data.map(v => {
       const vendidos = +(v.litros - (v.litros_restantes||0)).toFixed(2);
