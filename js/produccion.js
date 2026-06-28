@@ -44,6 +44,7 @@ const Produccion = {
       <div id="prod-panel-historico" style="display:none">
         <!-- Selector periodo -->
         <div class="prod-periodo-sel">
+          <button class="prod-periodo-btn" onclick="Produccion.setPeriodo('hoy',this)">Hoy</button>
           <button class="prod-periodo-btn active" onclick="Produccion.setPeriodo('semana',this)">Esta semana</button>
           <button class="prod-periodo-btn" onclick="Produccion.setPeriodo('mes',this)">Este mes</button>
           <button class="prod-periodo-btn" onclick="Produccion.setPeriodo('custom',this)">Personalizado</button>
@@ -59,18 +60,36 @@ const Produccion = {
           <button class="prod-periodo-btn active" onclick="Produccion.cargarHistorico()">Aplicar</button>
         </div>
 
-        <!-- KPIs histórico -->
-        <div class="prod-hist-kpis">
-          <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-lotes">–</div><div class="prod-hist-kpi-l">Lotes vendidos</div></div>
-          <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-litros">–</div><div class="prod-hist-kpi-l">Litros vendidos</div></div>
-          <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-sabores">–</div><div class="prod-hist-kpi-l">Sabores distintos</div></div>
+        <!-- ══ Vista ventas (semana / mes / personalizado) ══ -->
+        <div id="prod-hist-ventas-view">
+          <!-- KPIs histórico -->
+          <div class="prod-hist-kpis">
+            <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-lotes">–</div><div class="prod-hist-kpi-l">Lotes vendidos</div></div>
+            <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-litros">–</div><div class="prod-hist-kpi-l">Litros vendidos</div></div>
+            <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-sabores">–</div><div class="prod-hist-kpi-l">Sabores distintos</div></div>
+          </div>
+
+          <div class="prod-seccion-lbl">🏆 Ranking de sabores vendidos</div>
+          <div id="prod-hist-ranking"><div class="prod-loading">Cargando…</div></div>
+
+          <div class="prod-seccion-lbl">Detalle del periodo</div>
+          <div id="prod-hist-list"><div class="prod-loading">Cargando…</div></div>
         </div>
 
-        <div class="prod-seccion-lbl">🏆 Ranking de sabores vendidos</div>
-        <div id="prod-hist-ranking"><div class="prod-loading">Cargando…</div></div>
+        <!-- ══ Vista Hoy (elaboración: mixes + congelados) ══ -->
+        <div id="prod-hist-hoy-view" style="display:none">
+          <div class="prod-hist-kpis">
+            <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-hoy-mixes">–</div><div class="prod-hist-kpi-l">Litros en mix</div></div>
+            <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-hoy-congel">–</div><div class="prod-hist-kpi-l">Litros congelados</div></div>
+            <div class="prod-hist-kpi"><div class="prod-hist-kpi-v" id="hkpi-hoy-sabores">–</div><div class="prod-hist-kpi-l">Sabores distintos</div></div>
+          </div>
 
-        <div class="prod-seccion-lbl">Detalle del periodo</div>
-        <div id="prod-hist-list"><div class="prod-loading">Cargando…</div></div>
+          <div class="prod-seccion-lbl">🧪 Mixes elaborados hoy</div>
+          <div id="prod-hoy-mixes-list"><div class="prod-loading">Cargando…</div></div>
+
+          <div class="prod-seccion-lbl">🧊 Puesto a congelar hoy</div>
+          <div id="prod-hoy-congel-list"><div class="prod-loading">Cargando…</div></div>
+        </div>
 
         ${this.esAdmin() ? `
         <div class="prod-admin-zona">
@@ -90,8 +109,15 @@ const Produccion = {
     document.getElementById('ptab-historico').classList.toggle('active', tab === 'historico');
     document.getElementById('prod-panel-operativa').style.display = tab === 'operativa' ? '' : 'none';
     document.getElementById('prod-panel-historico').style.display = tab === 'historico' ? '' : 'none';
-    if (tab === 'historico') this.cargarHistorico();
-    else this.renderOperativa();
+    if (tab === 'historico') {
+      // Respeta el periodo que estuviera activo (incluida la vista "Hoy")
+      // en vez de recargar siempre las ventas — si no, al volver de
+      // Operativa se vería la vista correcta pero con datos sin refrescar.
+      if (this._periodoActivo === 'hoy') this.cargarElaboracionHoy();
+      else this.cargarHistorico();
+    } else {
+      this.renderOperativa();
+    }
   },
 
   // ── Filtrar lotes ────────────────────────────────────────────────────────
@@ -261,10 +287,18 @@ const Produccion = {
     btn.classList.add('active');
     const rangoEl = document.getElementById('prod-rango-custom');
     rangoEl.classList.toggle('hidden', periodo !== 'custom');
+
+    // La vista "Hoy" muestra elaboración (mixes + congelados), no ventas —
+    // se alterna el contenedor visible sin importar si el periodo es
+    // custom o no, para que "Personalizado"/"Aplicar" siempre vuelvan a
+    // mostrar la vista de ventas aunque se viniera de "Hoy".
+    this.toggleVistaHistorico(periodo === 'hoy' ? 'hoy' : 'ventas');
+
     if (periodo !== 'custom') {
       this._periodoActivo = periodo;
       this.actualizarInfoPeriodo(periodo);
-      this.cargarHistorico();
+      if (periodo === 'hoy') this.cargarElaboracionHoy();
+      else this.cargarHistorico();
     }
   },
 
@@ -272,10 +306,19 @@ const Produccion = {
     this._periodoActivo = periodo;
   },
 
+  toggleVistaHistorico(modo) {
+    const ventasEl = document.getElementById('prod-hist-ventas-view');
+    const hoyEl    = document.getElementById('prod-hist-hoy-view');
+    if (ventasEl) ventasEl.style.display = modo === 'ventas' ? '' : 'none';
+    if (hoyEl)    hoyEl.style.display    = modo === 'hoy'    ? '' : 'none';
+  },
+
   actualizarInfoPeriodo(periodo) {
     const hoy = new Date();
     let txt = '';
-    if (periodo === 'semana') {
+    if (periodo === 'hoy') {
+      txt = `Hoy, ${this.fmtF(hoy.toISOString().split('T')[0])}`;
+    } else if (periodo === 'semana') {
       const lunes = new Date(hoy);
       const dia = hoy.getDay() === 0 ? 6 : hoy.getDay() - 1;
       lunes.setDate(hoy.getDate() - dia);
@@ -414,6 +457,48 @@ const Produccion = {
           </div>
         </div>`;
     }).join('');
+  },
+
+  // Vista "Hoy" del Histórico — a diferencia de las demás (que muestran
+  // ventas de lotes_venta), esta muestra elaboración del día: litros de
+  // mix preparados hoy (lotes_mix.fecha) y litros puestos a congelar hoy
+  // (lotes_cremado.fecha_cremado). Es la definición de "producido en el
+  // día" que pidió el usuario, distinta de "vendido".
+  async cargarElaboracionHoy() {
+    const hoyStr = this.hoy();
+    const [{ data: mixes }, { data: congel }] = await Promise.all([
+      sb.from('lotes_mix').select('*').eq('fecha', hoyStr),
+      sb.from('lotes_cremado').select('*').eq('fecha_cremado', hoyStr),
+    ]);
+
+    const listaMixes  = mixes  || [];
+    const listaCongel = congel || [];
+
+    const litrosMixes  = listaMixes.reduce((s, m) => s + (parseFloat(m.litros) || 0), 0);
+    const litrosCongel = listaCongel.reduce((s, c) => s + (parseFloat(c.litros) || 0), 0);
+    const saboresHoy   = new Set([...listaMixes.map(m => m.receta_nombre), ...listaCongel.map(c => c.receta_nombre)]).size;
+
+    document.getElementById('hkpi-hoy-mixes').textContent   = litrosMixes.toFixed(1)  + 'L';
+    document.getElementById('hkpi-hoy-congel').textContent  = litrosCongel.toFixed(1) + 'L';
+    document.getElementById('hkpi-hoy-sabores').textContent = saboresHoy;
+
+    const renderLista = (rows) => {
+      const porSabor = new Map();
+      rows.forEach(r => {
+        const litros = parseFloat(r.litros) || 0;
+        porSabor.set(r.receta_nombre, +((porSabor.get(r.receta_nombre) || 0) + litros).toFixed(2));
+      });
+      const arr = Array.from(porSabor, ([nombre, litros]) => ({ nombre, litros })).sort((a, b) => b.litros - a.litros);
+      if (!arr.length) return '<div class="prod-empty">Sin movimiento hoy</div>';
+      return arr.map(r => `
+        <div class="prod-hist-item">
+          <div class="prod-hist-info"><div class="prod-hist-nombre">${r.nombre}</div></div>
+          <div class="prod-hist-right"><div class="prod-hist-litros">${r.litros}L</div></div>
+        </div>`).join('');
+    };
+
+    document.getElementById('prod-hoy-mixes-list').innerHTML  = renderLista(listaMixes);
+    document.getElementById('prod-hoy-congel-list').innerHTML = renderLista(listaCongel);
   },
 
   // Resuelve, a partir del nombre de sabor pulsado en una tarjeta fusionada,
