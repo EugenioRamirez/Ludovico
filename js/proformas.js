@@ -313,7 +313,15 @@ const Proformas = {
     document.getElementById('btn-pf-gen-confirm').disabled = true;
 
     const fechaInicio = `${anio}-${String(mes).padStart(2, '0')}-01`;
-    const fechaFin    = new Date(anio, mes, 0).toISOString().slice(0, 10);
+    // OJO: no usar .toISOString() aquí — new Date(anio, mes, 0) crea la fecha
+    // a medianoche en hora LOCAL, y toISOString() la convierte a UTC. En
+    // horario de verano España (UTC+2), esa medianoche local cae en el día
+    // anterior en UTC, así que el último día del mes se calculaba mal (un
+    // día antes) y el albarán entregado justo ese último día se quedaba
+    // fuera del filtro .lte(). getDate() en cambio lee el día en hora local,
+    // sin conversión, así que es seguro.
+    const ultimoDia   = new Date(anio, mes, 0).getDate();
+    const fechaFin    = `${anio}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
 
     try {
       const { data: pedidos, error } = await sb
@@ -374,7 +382,15 @@ const Proformas = {
     const empleada  = Estado.getEmpleada();
 
     const fechaInicio = `${anio}-${String(mes).padStart(2, '0')}-01`;
-    const fechaFin    = new Date(anio, mes, 0).toISOString().slice(0, 10);
+    // OJO: no usar .toISOString() aquí — new Date(anio, mes, 0) crea la fecha
+    // a medianoche en hora LOCAL, y toISOString() la convierte a UTC. En
+    // horario de verano España (UTC+2), esa medianoche local cae en el día
+    // anterior en UTC, así que el último día del mes se calculaba mal (un
+    // día antes) y el albarán entregado justo ese último día se quedaba
+    // fuera del filtro .lte(). getDate() en cambio lee el día en hora local,
+    // sin conversión, así que es seguro.
+    const ultimoDia   = new Date(anio, mes, 0).getDate();
+    const fechaFin    = `${anio}-${String(mes).padStart(2, '0')}-${String(ultimoDia).padStart(2, '0')}`;
 
     const btn = document.getElementById('btn-pf-gen-confirm');
     btn.disabled = true; btn.textContent = 'Generando…';
